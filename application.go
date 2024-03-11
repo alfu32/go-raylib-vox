@@ -32,13 +32,13 @@ type VxdiAppEditor struct {
 	CameraModeNames              [5]string
 	ScreenWidth                  int
 	ScreenHeight                 int
-	Guides                       Scene // Assume Scene is defined elsewhere
-	ConstructionHints            Scene // Assume Scene is defined elsewhere
+	Guides                       *Scene // Assume Scene is defined elsewhere
+	ConstructionHints            *Scene // Assume Scene is defined elsewhere
 	LightDirection               VxdiLight
 	TextBuffer                   string
 }
 
-func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) VxdiAppEditor {
+func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) *VxdiAppEditor {
 	camera.Position = rl.NewVector3(10.0, 10.0, 10.0)
 	camera.Target = rl.NewVector3(0, 0, 0)
 	camera.Up = rl.NewVector3(0, 1, 0)
@@ -69,5 +69,5 @@ func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) VxdiAppEditor {
 	app.CurrentColor = app.Colors[4] // Example, assuming color initialization
 	app.CurrentColorIndex = 4
 
-	return app
+	return &app
 }

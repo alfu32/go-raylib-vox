@@ -7,6 +7,7 @@ import (
 )
 
 const VOXEL_SZ = 1
+const VOXEL_SZ2 = VOXEL_SZ / 2
 
 type Voxel struct {
 	Position rl.Vector3
@@ -19,14 +20,19 @@ func NewVoxel() *Voxel {
 		Material: rl.NewColor(1, 1, 1, 255),
 	}
 }
+func InitVoxel(x float32, y float32, z float32, color rl.Color) *Voxel {
+	return &Voxel{
+		Position: rl.NewVector3(x, y, z),
+		Material: color,
+	}
+}
 func KeyForVoxel(pos rl.Vector3) string {
 	return fmt.Sprintf("%f,%f,%f", pos.X, pos.Y, pos.Z)
 }
 func (voxel *Voxel) GetBoundingBox() rl.BoundingBox {
-	size := float32(0.5)
 	return rl.BoundingBox{
-		Min: rl.NewVector3(voxel.Position.X-size, voxel.Position.Y-size, voxel.Position.Z-size),
-		Max: rl.NewVector3(voxel.Position.X+size, voxel.Position.Y+size, voxel.Position.Z+size),
+		Min: rl.NewVector3(voxel.Position.X-VOXEL_SZ2, voxel.Position.Y-VOXEL_SZ2, voxel.Position.Z-VOXEL_SZ2),
+		Max: rl.NewVector3(voxel.Position.X+VOXEL_SZ2, voxel.Position.Y+VOXEL_SZ2, voxel.Position.Z+VOXEL_SZ2),
 	}
 }
 
@@ -60,41 +66,40 @@ func drawTriangle(p1, p2, p3 rl.Vector3, color rl.Color) {
 	rl.DrawTriangle3D(p1, p2, p3, color)
 }
 func (voxel *Voxel) DrawShaded(light VxdiLight) {
-	size := float32(0.5) // Half of the total size to make the cube size 1 in all directions
 	n := rl.Vector3Normalize(light.Direction)
 
 	// Define vertices for each face of the cube
 	vertices := []rl.Vector3{
 		// Front face
-		{X: voxel.Position.X - size, Y: voxel.Position.Y - size, Z: voxel.Position.Z + size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y - size, Z: voxel.Position.Z + size},
-		{X: voxel.Position.X - size, Y: voxel.Position.Y + size, Z: voxel.Position.Z + size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y + size, Z: voxel.Position.Z + size},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
 		// Back face
-		{X: voxel.Position.X - size, Y: voxel.Position.Y - size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X - size, Y: voxel.Position.Y + size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y - size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y + size, Z: voxel.Position.Z - size},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
 		// Top face
-		{X: voxel.Position.X - size, Y: voxel.Position.Y + size, Z: voxel.Position.Z + size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y + size, Z: voxel.Position.Z + size},
-		{X: voxel.Position.X - size, Y: voxel.Position.Y + size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y + size, Z: voxel.Position.Z - size},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
 		// Bottom face
-		{X: voxel.Position.X - size, Y: voxel.Position.Y - size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y - size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X - size, Y: voxel.Position.Y - size, Z: voxel.Position.Z + size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y - size, Z: voxel.Position.Z + size},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
 		// Left face
-		{X: voxel.Position.X - size, Y: voxel.Position.Y - size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X - size, Y: voxel.Position.Y - size, Z: voxel.Position.Z + size},
-		{X: voxel.Position.X - size, Y: voxel.Position.Y + size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X - size, Y: voxel.Position.Y + size, Z: voxel.Position.Z + size},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X - VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
 		// Right face
-		{X: voxel.Position.X + size, Y: voxel.Position.Y - size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y + size, Z: voxel.Position.Z - size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y - size, Z: voxel.Position.Z + size},
-		{X: voxel.Position.X + size, Y: voxel.Position.Y + size, Z: voxel.Position.Z + size},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z - VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y - VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
+		{X: voxel.Position.X + VOXEL_SZ2, Y: voxel.Position.Y + VOXEL_SZ2, Z: voxel.Position.Z + VOXEL_SZ2},
 	}
 
 	// Draw the cube using triangle strips with shaded colors

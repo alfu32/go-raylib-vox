@@ -64,6 +64,20 @@ func getCursorPosition(camera rl.Camera, scene *Scene, app *VxdiAppEditor, curso
 	cursor2.Position = modelPointNextInt
 }
 func doNothing() {}
+func (app *VxdiAppEditor) AddGuides(point rl.Vector3) {
+
+	if rl.IsKeyPressed(rl.KeyG) {
+		app.Guides.AddVoxel(InitVoxel(point.X, point.Y, point.Z, rl.White))
+		for i := 1; i <= 10; i++ {
+			app.Guides.AddVoxel(InitVoxel(point.X+float32(i), point.Y, point.Z, rl.Red))
+			app.Guides.AddVoxel(InitVoxel(point.X-float32(i), point.Y, point.Z, rl.Fade(rl.Red, 0.5)))
+			app.Guides.AddVoxel(InitVoxel(point.X, point.Y+float32(i), point.Z, rl.Green))
+			app.Guides.AddVoxel(InitVoxel(point.X, point.Y-float32(i), point.Z, rl.Fade(rl.Green, 0.5)))
+			app.Guides.AddVoxel(InitVoxel(point.X, point.Y, point.Z+float32(i), rl.Blue))
+			app.Guides.AddVoxel(InitVoxel(point.X, point.Y, point.Z-float32(i), rl.Fade(rl.Blue, 0.5)))
+		}
+	}
+}
 func main() {
 	screenWidth := int32(1280)
 	screenHeight := int32(720)
@@ -151,10 +165,18 @@ func main() {
 		cursor2.Position = modelPointNextInt
 
 		if isMousePositionChanged || showHelp {
-			fmt.Printf("mouseMoved [%d] : (%v) {%v} \n", dbgMoveNumber, currentMousePosition, modelPointNextInt)
+			// fmt.Printf("mouseMoved [%d] : (%v) {%v} \n", dbgMoveNumber, currentMousePosition, modelPointNextInt)
 			doNothing()
 		}
+		if rl.IsMouseButtonDown(rl.MouseButtonLeft) && !rl.IsKeyDown(rl.KeyLeftControl) && !rl.IsKeyDown(rl.KeyLeftShift) {
+			if rl.IsKeyDown(rl.KeyLeftAlt) {
+				scene.RemoveVoxel(modelPointInt.X, modelPointInt.Y, modelPointInt.Z)
+			} else {
+				scene.AddVoxel(InitVoxel(modelPointInt.X, modelPointInt.Y, modelPointInt.Z, rl.Red))
+			}
+		}
 		orbit.ControlCamera()
+		app.AddGuides(modelPointInt)
 
 		rl.UpdateCamera(&camera, rl.CameraCustom)
 
@@ -166,16 +188,22 @@ func main() {
 
 		rl.DrawGrid(20, 1.0)
 		scene.Draw(1, light)
+		for _, v := range app.Guides.Voxels {
+			rl.DrawCubeWires(v.Position, VOXEL_SZ/4, VOXEL_SZ/4, VOXEL_SZ/4, rl.DarkGray)
+		}
 		app.Guides.Draw(2, light)
-		rl.DrawCubeWires(cursor1.Position, 1, 1, 1, cursor1.Material)
-		rl.DrawCubeWires(cursor2.Position, 1, 1, 1, cursor2.Material)
+		//rl.DrawCubeWires(cursor1.Position, 1, 1, 1, cursor1.Material)
+		//rl.DrawCubeWires(cursor2.Position, 1, 1, 1, cursor2.Material)
 		app.ConstructionHints.Draw(2, light)
+		for _, v := range app.ConstructionHints.Voxels {
+			rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+		}
 
 		rl.EndMode3D()
 
 		rl.DrawFPS(10, 10)
 
-		status = fmt.Sprintf("mouseMoved [%d] : (%v) {%v} \n", dbgMoveNumber, currentMousePosition, modelPointNextInt)
+		status = fmt.Sprintf("scene: %d, guides: %d, helpers: %d, mouse [%d] : (%v) {%v} \n", len(scene.Voxels), len(app.Guides.Voxels), len(app.ConstructionHints.Voxels), dbgMoveNumber, currentMousePosition, modelPointNextInt)
 		rl.DrawText(status, 10, 40, 20, rl.Black)
 
 		rl.EndDrawing()

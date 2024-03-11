@@ -20,27 +20,30 @@ type Scene struct {
 }
 
 // NewScene creates and returns a new instance of a Scene.
-func NewScene(is_persisted bool, light VxdiLight) Scene {
-	return Scene{
-		Voxels: make(map[string]*Voxel),
-		Light:  light,
+func NewScene(is_persisted bool, light VxdiLight) *Scene {
+	return &Scene{
+		Voxels:      make(map[string]*Voxel),
+		Light:       light,
+		IsPersisted: false,
+		Filename:    "temp",
 	}
 }
 
 // AddVoxel adds a new voxel to the scene. If a voxel already exists at the given coordinates, it updates the existing voxel.
 func (s *Scene) AddVoxel(v *Voxel) {
 	key := fmt.Sprintf("%f,%f,%f", v.Position.X, v.Position.Y, v.Position.Z)
+	fmt.Printf("Added Voxel %v\n", v)
 	s.Voxels[key] = v
 }
 
 // RemoveVoxel removes a voxel from the scene by its coordinates. If no voxel exists at those coordinates, it does nothing.
-func (s *Scene) RemoveVoxel(x, y, z float64) {
+func (s *Scene) RemoveVoxel(x, y, z float32) {
 	key := fmt.Sprintf("%f,%f,%f", x, y, z)
 	delete(s.Voxels, key)
 }
 
 // GetVoxel retrieves a voxel from the scene by its coordinates. It returns the voxel and a boolean indicating if it was found.
-func (s *Scene) GetVoxel(x, y, z float64) (*Voxel, bool) {
+func (s *Scene) GetVoxel(x, y, z float32) (*Voxel, bool) {
 	key := fmt.Sprintf("%f,%f,%f", x, y, z)
 	voxel, exists := s.Voxels[key]
 	return voxel, exists
@@ -49,11 +52,13 @@ func (scene *Scene) Draw(typ uint8, light VxdiLight) {
 	for _, v := range scene.Voxels {
 		switch typ {
 		case 0:
-			rl.DrawCube(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, v.Material)
 			rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
 		case 1:
 			v.DrawShaded(light)
+			rl.DrawCube(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, v.Material)
 			rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+		case 2:
+			rl.DrawCubeWires(v.Position, VOXEL_SZ/4, VOXEL_SZ/4, VOXEL_SZ/4, rl.DarkGray)
 		}
 
 	}
