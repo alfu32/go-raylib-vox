@@ -25,44 +25,44 @@ func Vector3Round(v rl.Vector3) rl.Vector3 {
 	)
 }
 
-func updateMousePosition(previousMousePosition *rl.Vector2, dbgMoveNumber *uint8) (rl.Vector2, bool) {
-	currentMousePosition := rl.GetMousePosition()
-	isMousePositionChanged := false
-	if rl.Vector2Length(rl.Vector2Subtract(currentMousePosition, *previousMousePosition)) > 5 {
-		*previousMousePosition = currentMousePosition
-		isMousePositionChanged = true
-		*dbgMoveNumber = (*dbgMoveNumber + 1) % 255
-	}
-	return currentMousePosition, isMousePositionChanged
-}
-
-func getCursorPosition(camera rl.Camera, scene *Scene, app *VxdiAppEditor, cursor *Voxel, cursor2 *Voxel) {
-	mouseModel := scene.GetIntersections(camera)
-	if mouseModel.CollisionHit == CollisionHitPlane || mouseModel.CollisionHit == CollisionHitNone {
-		mouseModel = app.Guides.GetIntersections(camera)
-		if mouseModel.CollisionHit == CollisionHitVoxel {
-			mouseModel.CollisionHit = CollisionHitGuide
-		}
-	}
-
-	modelPointInt := Vector3Floor(mouseModel.Point)
-	modelPointNextInt := rl.Vector3Add(modelPointInt, rl.NewVector3(0, 1, 0))
-
-	switch mouseModel.CollisionHit {
-	case CollisionHitNone:
-		modelPointNextInt = Vector3Round(mouseModel.Point)
-		modelPointInt = modelPointNextInt
-	case CollisionHitVoxel:
-		modelPointInt = mouseModel.Voxel.Position
-		modelPointNextInt = rl.Vector3Add(mouseModel.Voxel.Position, mouseModel.Normal)
-	case CollisionHitPlane, CollisionHitGuide:
-		modelPointNextInt = Vector3Round(mouseModel.Point)
-		modelPointInt = modelPointNextInt
-	}
-
-	cursor.Position = modelPointInt
-	cursor2.Position = modelPointNextInt
-}
+// ///////////////////   func updateMousePosition(previousMousePosition *rl.Vector2, dbgMoveNumber *uint8) (rl.Vector2, bool) {
+// ///////////////////   	currentMousePosition := rl.GetMousePosition()
+// ///////////////////   	isMousePositionChanged := false
+// ///////////////////   	if rl.Vector2Length(rl.Vector2Subtract(currentMousePosition, *previousMousePosition)) > 5 {
+// ///////////////////   		*previousMousePosition = currentMousePosition
+// ///////////////////   		isMousePositionChanged = true
+// ///////////////////   		*dbgMoveNumber = (*dbgMoveNumber + 1) % 255
+// ///////////////////   	}
+// ///////////////////   	return currentMousePosition, isMousePositionChanged
+// ///////////////////   }
+// ///////////////////
+// ///////////////////   func getCursorPosition(camera rl.Camera, scene *Scene, app *VxdiAppEditor, cursor *Voxel, cursor2 *Voxel) {
+// ///////////////////   	mouseModel := scene.GetIntersections(&camera)
+// ///////////////////   	if mouseModel.CollisionHit == CollisionHitPlane || mouseModel.CollisionHit == CollisionHitNone {
+// ///////////////////   		mouseModel = app.Guides.GetIntersections(&camera)
+// ///////////////////   		if mouseModel.CollisionHit == CollisionHitVoxel {
+// ///////////////////   			mouseModel.CollisionHit = CollisionHitGuide
+// ///////////////////   		}
+// ///////////////////   	}
+// ///////////////////
+// ///////////////////   	modelPointInt := Vector3Floor(mouseModel.Point)
+// ///////////////////   	modelPointNextInt := rl.Vector3Add(modelPointInt, rl.NewVector3(0, 1, 0))
+// ///////////////////
+// ///////////////////   	switch mouseModel.CollisionHit {
+// ///////////////////   	case CollisionHitNone:
+// ///////////////////   		modelPointNextInt = Vector3Round(mouseModel.Point)
+// ///////////////////   		modelPointInt = modelPointNextInt
+// ///////////////////   	case CollisionHitVoxel:
+// ///////////////////   		modelPointInt = mouseModel.Voxel.Position
+// ///////////////////   		modelPointNextInt = rl.Vector3Add(mouseModel.Voxel.Position, mouseModel.Normal)
+// ///////////////////   	case CollisionHitPlane, CollisionHitGuide:
+// ///////////////////   		modelPointNextInt = Vector3Round(mouseModel.Point)
+// ///////////////////   		modelPointInt = modelPointNextInt
+// ///////////////////   	}
+// ///////////////////
+// ///////////////////   	cursor.Position = modelPointInt
+// ///////////////////   	cursor2.Position = modelPointNextInt
+// ///////////////////   }
 func doNothing() {}
 func (app *VxdiAppEditor) AddGuides(point rl.Vector3) {
 
@@ -85,6 +85,7 @@ func main() {
 	rl.SetConfigFlags(rl.FlagMsaa4xHint) //ENABLE 4X MSAA IF AVAILABLE
 
 	rl.InitWindow(screenWidth, screenHeight, "raylib [shaders] example - basic lighting")
+	rl.SetConfigFlags(rl.FlagWindowResizable)
 
 	camera := rl.Camera3D{}
 	camera.Position = rl.NewVector3(2.0, 4.0, 6.0)
@@ -138,9 +139,9 @@ func main() {
 			isMousePositionChanged = true
 			dbgMoveNumber = (dbgMoveNumber + 1) % 255
 		}
-		mouseModel := scene.GetIntersections(camera)
+		mouseModel := scene.GetIntersections(&camera)
 		if mouseModel.CollisionHit == CollisionHitPlane || mouseModel.CollisionHit == CollisionHitNone {
-			mouseModel = app.Guides.GetIntersections(camera)
+			mouseModel = app.Guides.GetIntersections(&camera)
 			if mouseModel.CollisionHit == CollisionHitVoxel {
 				mouseModel.CollisionHit = CollisionHitGuide
 			}
@@ -168,11 +169,11 @@ func main() {
 			// fmt.Printf("mouseMoved [%d] : (%v) {%v} \n", dbgMoveNumber, currentMousePosition, modelPointNextInt)
 			doNothing()
 		}
-		if rl.IsMouseButtonDown(rl.MouseButtonLeft) && !rl.IsKeyDown(rl.KeyLeftControl) && !rl.IsKeyDown(rl.KeyLeftShift) {
+		if rl.IsMouseButtonReleased(rl.MouseButtonLeft) && !rl.IsKeyDown(rl.KeyLeftControl) && !rl.IsKeyDown(rl.KeyLeftShift) {
 			if rl.IsKeyDown(rl.KeyLeftAlt) {
 				scene.RemoveVoxel(modelPointInt.X, modelPointInt.Y, modelPointInt.Z)
 			} else {
-				scene.AddVoxel(InitVoxel(modelPointInt.X, modelPointInt.Y, modelPointInt.Z, rl.Red))
+				scene.AddVoxel(InitVoxel(modelPointNextInt.X, modelPointNextInt.Y, modelPointNextInt.Z, rl.Red))
 			}
 		}
 		orbit.ControlCamera()
@@ -188,16 +189,38 @@ func main() {
 
 		rl.DrawGrid(20, 1.0)
 		scene.Draw(1, light)
-		for _, v := range app.Guides.Voxels {
-			rl.DrawCubeWires(v.Position, VOXEL_SZ/4, VOXEL_SZ/4, VOXEL_SZ/4, rl.DarkGray)
-		}
+		/// for _, v := range app.Guides.Voxels {
+		/// 	rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+		/// }
 		app.Guides.Draw(2, light)
 		//rl.DrawCubeWires(cursor1.Position, 1, 1, 1, cursor1.Material)
 		//rl.DrawCubeWires(cursor2.Position, 1, 1, 1, cursor2.Material)
 		app.ConstructionHints.Draw(2, light)
-		for _, v := range app.ConstructionHints.Voxels {
-			rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+
+		// You can then use Raylib functions to check for intersections, etc.
+		if currentMousePosition.X > 200 && currentMousePosition.X < float32(app.ScreenWidth-70) {
+			rl.DrawLine3D(
+				mouseModel.Point,
+				rl.Vector3Add(
+					mouseModel.Point,
+					rl.NewVector3(
+						mouseModel.Normal.X*1,
+						mouseModel.Normal.Y*1,
+						mouseModel.Normal.Z*1,
+					),
+				),
+				rl.NewColor(
+					uint8(mouseModel.Normal.X*255),
+					uint8(mouseModel.Normal.Y*255),
+					uint8(mouseModel.Normal.Z*255),
+					255,
+				))
+			InitVoxel(mouseModel.Point.X, mouseModel.Point.Y, mouseModel.Point.Z, rl.Blue).DrawShaded(light, VOXEL_SZ2/2)
 		}
+		// for _, v := range app.ConstructionHints.Voxels {
+		// 	rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+		// }
+		// rl.DrawLine3D(rl.NewVector3(0, 0, 0), modelPointInt, rl.Green)
 
 		rl.EndMode3D()
 

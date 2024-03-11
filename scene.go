@@ -24,7 +24,7 @@ func NewScene(is_persisted bool, light VxdiLight) *Scene {
 	return &Scene{
 		Voxels:      make(map[string]*Voxel),
 		Light:       light,
-		IsPersisted: false,
+		IsPersisted: is_persisted,
 		Filename:    "temp",
 	}
 }
@@ -32,8 +32,9 @@ func NewScene(is_persisted bool, light VxdiLight) *Scene {
 // AddVoxel adds a new voxel to the scene. If a voxel already exists at the given coordinates, it updates the existing voxel.
 func (s *Scene) AddVoxel(v *Voxel) {
 	key := fmt.Sprintf("%f,%f,%f", v.Position.X, v.Position.Y, v.Position.Z)
-	fmt.Printf("Added Voxel %v\n", v)
+	fmt.Printf("Adding Voxel %v, len %d\n", v, len(s.Voxels))
 	s.Voxels[key] = v
+	fmt.Printf("Added Voxel %v, new len %d\n", v, len(s.Voxels))
 }
 
 // RemoveVoxel removes a voxel from the scene by its coordinates. If no voxel exists at those coordinates, it does nothing.
@@ -51,13 +52,12 @@ func (s *Scene) GetVoxel(x, y, z float32) (*Voxel, bool) {
 func (scene *Scene) Draw(typ uint8, light VxdiLight) {
 	for _, v := range scene.Voxels {
 		switch typ {
-		case 0:
+		case 0: // type hint
 			rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
-		case 1:
-			v.DrawShaded(light)
-			rl.DrawCube(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, v.Material)
+		case 1: // type objects
+			v.DrawShaded(light, VOXEL_SZ)
 			rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
-		case 2:
+		case 2: // type guides
 			rl.DrawCubeWires(v.Position, VOXEL_SZ/4, VOXEL_SZ/4, VOXEL_SZ/4, rl.DarkGray)
 		}
 
@@ -95,8 +95,8 @@ func (scene *Scene) IntersectPoint(ray rl.Ray) Collision {
 }
 
 // sceneGetIntersections checks for intersections between a ray (cast from the mouse position) and scene objects or a fallback plane.
-func (scene *Scene) GetIntersections(camera rl.Camera3D) Collision {
-	ray := rl.GetMouseRay(rl.GetMousePosition(), camera)
+func (scene *Scene) GetIntersections(camera *rl.Camera3D) Collision {
+	ray := rl.GetMouseRay(rl.GetMousePosition(), *camera)
 	result := scene.IntersectPoint(ray)
 
 	if !result.Hit {
