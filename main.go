@@ -24,45 +24,6 @@ func Vector3Round(v rl.Vector3) rl.Vector3 {
 		float32(math.Round(float64(v.Z))),
 	)
 }
-
-// ///////////////////   func updateMousePosition(previousMousePosition *rl.Vector2, dbgMoveNumber *uint8) (rl.Vector2, bool) {
-// ///////////////////   	app.Mouse2 := rl.GetMousePosition()
-// ///////////////////   	isMousePositionChanged := false
-// ///////////////////   	if rl.Vector2Length(rl.Vector2Subtract(app.Mouse2, *previousMousePosition)) > 5 {
-// ///////////////////   		*previousMousePosition = app.Mouse2
-// ///////////////////   		isMousePositionChanged = true
-// ///////////////////   		*dbgMoveNumber = (*dbgMoveNumber + 1) % 255
-// ///////////////////   	}
-// ///////////////////   	return app.Mouse2, isMousePositionChanged
-// ///////////////////   }
-// ///////////////////
-// ///////////////////   func getCursorPosition(camera rl.Camera, scene *Scene, app *VxdiAppEditor, cursor *Voxel, cursor2 *Voxel) {
-// ///////////////////   	app.Mouse3 := scene.GetIntersections(&camera)
-// ///////////////////   	if app.Mouse3.CollisionHit == CollisionHitPlane || app.Mouse3.CollisionHit == CollisionHitNone {
-// ///////////////////   		app.Mouse3 = app.Guides.GetIntersections(&camera)
-// ///////////////////   		if app.Mouse3.CollisionHit == CollisionHitVoxel {
-// ///////////////////   			app.Mouse3.CollisionHit = CollisionHitGuide
-// ///////////////////   		}
-// ///////////////////   	}
-// ///////////////////
-// ///////////////////   	app.Mouse3Int := Vector3Floor(app.Mouse3.Point)
-// ///////////////////   	app.Mouse3IntNext := rl.Vector3Add(app.Mouse3Int, rl.NewVector3(0, 1, 0))
-// ///////////////////
-// ///////////////////   	switch app.Mouse3.CollisionHit {
-// ///////////////////   	case CollisionHitNone:
-// ///////////////////   		app.Mouse3IntNext = Vector3Round(app.Mouse3.Point)
-// ///////////////////   		app.Mouse3Int = app.Mouse3IntNext
-// ///////////////////   	case CollisionHitVoxel:
-// ///////////////////   		app.Mouse3Int = app.Mouse3.Voxel.Position
-// ///////////////////   		app.Mouse3IntNext = rl.Vector3Add(app.Mouse3.Voxel.Position, app.Mouse3.Normal)
-// ///////////////////   	case CollisionHitPlane, CollisionHitGuide:
-// ///////////////////   		app.Mouse3IntNext = Vector3Round(app.Mouse3.Point)
-// ///////////////////   		app.Mouse3Int = app.Mouse3IntNext
-// ///////////////////   	}
-// ///////////////////
-// ///////////////////   	cursor.Position = app.Mouse3Int
-// ///////////////////   	cursor2.Position = app.Mouse3IntNext
-// ///////////////////   }
 func doNothing() {}
 func (app *VxdiAppEditor) AddGuides(point rl.Vector3) {
 
@@ -333,6 +294,12 @@ func main() {
 				rl.DrawRectangleLines(int32(app.ScreenWidth)-64, int32(i)*64, 64, 64, rl.NewColor(127, 255, 0, 255))
 				rl.DrawText(name, int32(app.ScreenWidth)-64, int32(i)*64+48, 12, rl.NewColor(0, 0, 0, 255))
 			}(index, toolName)
+		}
+
+		posy32 := int32(math.Round(float64(app.Mouse2.Y)/32) * 32)
+		posx32 := int32(math.Round(float64(app.Mouse2.X)/32) * 32)
+		if box_contains(&leftPanelBox, &app.Mouse2) {
+			rl.DrawRectangle(posx32, posy32, 32, 32, rl.NewColor(127, 255, 0, 127))
 		}
 
 		rl.DrawFPS(10, 10)
