@@ -5,10 +5,11 @@ import (
 )
 
 // VoxelOperatorFn defines a function type in Go that matches the C typedef for the voxel operator function.
-type VoxelOperatorFn func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) int
+type VoxelOperatorFn func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint)
+type Builder2Points func(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn)
 
 // rasterizeLine function to rasterize a line between two 3D points in Go.
-func RasterizeLine(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn) int {
+func RasterizeLine(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn) {
 	dx := b.X - a.X
 	dy := b.Y - a.Y
 	dz := b.Z - a.Z
@@ -46,8 +47,6 @@ func RasterizeLine(a, b rl.Vector3, scene *Scene, material rl.Color, materialID 
 			}
 		}
 	}
-
-	return 0
 }
 
 // RasterizeSolidCube function to rasterize a solid cube given two 3D points.

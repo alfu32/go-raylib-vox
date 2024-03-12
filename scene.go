@@ -31,21 +31,24 @@ func NewScene(is_persisted bool, light VxdiLight) *Scene {
 
 // AddVoxel adds a new voxel to the scene. If a voxel already exists at the given coordinates, it updates the existing voxel.
 func (s *Scene) AddVoxel(v *Voxel) {
-	key := fmt.Sprintf("%f,%f,%f", v.Position.X, v.Position.Y, v.Position.Z)
-	fmt.Printf("Adding Voxel %v, len %d\n", v, len(s.Voxels))
+	key := fmt.Sprintf("%d,%d,%d", int32(v.Position.X), int32(v.Position.Y), int32(v.Position.Z))
+	fmt.Printf("Adding Voxel[%s] %v, len %d\n", key, v, len(s.Voxels))
 	s.Voxels[key] = v
 	fmt.Printf("Added Voxel %v, new len %d\n", v, len(s.Voxels))
+}
+func (s *Scene) AddVoxelAtPoint(p *rl.Vector3, mat rl.Color) {
+	s.AddVoxel(InitVoxel(p.X, p.Y, p.Z, mat))
 }
 
 // RemoveVoxel removes a voxel from the scene by its coordinates. If no voxel exists at those coordinates, it does nothing.
 func (s *Scene) RemoveVoxel(x, y, z float32) {
-	key := fmt.Sprintf("%f,%f,%f", x, y, z)
+	key := fmt.Sprintf("%d,%d,%d", int32(x), int32(y), int32(z))
 	delete(s.Voxels, key)
 }
 
 // GetVoxel retrieves a voxel from the scene by its coordinates. It returns the voxel and a boolean indicating if it was found.
 func (s *Scene) GetVoxel(x, y, z float32) (*Voxel, bool) {
-	key := fmt.Sprintf("%f,%f,%f", x, y, z)
+	key := fmt.Sprintf("%d,%d,%d", int32(x), int32(y), int32(z))
 	voxel, exists := s.Voxels[key]
 	return voxel, exists
 }
@@ -53,12 +56,12 @@ func (scene *Scene) Draw(typ uint8, light VxdiLight) {
 	for _, v := range scene.Voxels {
 		switch typ {
 		case 0: // type hint
-			rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+			rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
 		case 1: // type objects
 			v.DrawShaded(light, VOXEL_SZ)
-			rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+			rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
 		case 2: // type guides
-			rl.DrawCubeWires(v.Position, VOXEL_SZ/4, VOXEL_SZ/4, VOXEL_SZ/4, rl.DarkGray)
+			rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ/4, VOXEL_SZ/4, VOXEL_SZ/4, rl.DarkGray)
 		}
 
 	}
@@ -198,6 +201,7 @@ func (s *Scene) ImportScene(filename string) error {
 
 // SaveScene saves the current state of the scene to a binary file using gob encoding.
 func (s *Scene) SaveScene(filename string) error {
+	fmt.Printf("SaveScene bin %s \n", filename)
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -210,12 +214,13 @@ func (s *Scene) SaveScene(filename string) error {
 	if err != nil {
 		return err
 	}
-
+	fmt.Printf("flushing scene bin %s \n", filename)
 	return writer.Flush()
 }
 
 // LoadScene loads a scene from a binary file using gob encoding and replaces the current scene's content.
 func (s *Scene) LoadScene(filename string) error {
+	fmt.Printf("LoadScene bin %s \n", filename)
 	file, err := os.Open(filename)
 	if err != nil {
 		return err

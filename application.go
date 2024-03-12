@@ -4,21 +4,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-type AppConstructionMode int
-
-const (
-	AppConstructionModeHelp AppConstructionMode = iota + 0x100
-	AppConstructionModeSelect
-	AppConstructionModeVoxel
-	AppConstructionModeLine
-	AppConstructionModeStructure
-	AppConstructionModeShell
-	AppConstructionModeVolume
-	AppConstructionModePlate
-)
-
 type VxdiAppEditor struct {
-	ConstructionMode             AppConstructionMode
 	CurrentColor                 rl.Color
 	CurrentColorIndex            uint
 	Colors                       [360]rl.Color
@@ -30,12 +16,19 @@ type VxdiAppEditor struct {
 	CurrentCameraModeIndex       uint
 	CameraModes                  [5]rl.CameraMode
 	CameraModeNames              [5]string
-	ScreenWidth                  int
-	ScreenHeight                 int
+	ScreenWidth                  int32
+	ScreenHeight                 int32
 	Guides                       *Scene // Assume Scene is defined elsewhere
 	ConstructionHints            *Scene // Assume Scene is defined elsewhere
 	LightDirection               VxdiLight
-	TextBuffer                   string
+	CurrentTool                  string
+	Tools                        map[string]*Tool
+	ToolNames                    []string
+	Status                       string
+	Mouse2                       rl.Vector2
+	Mouse3                       Collision
+	Mouse3Int                    rl.Vector3
+	Mouse3IntNext                rl.Vector3
 }
 
 func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) *VxdiAppEditor {
@@ -49,7 +42,6 @@ func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) *VxdiAppEditor {
 	constructionHints := NewScene(false, light) // Assuming SceneInit is defined elsewhere
 
 	app := VxdiAppEditor{
-		ConstructionMode:             AppConstructionModeVoxel,
 		CurrentCameraProjection:      rl.CameraPerspective,
 		CurrentCameraProjectionIndex: 0,
 		CameraProjections:            [2]rl.CameraProjection{rl.CameraPerspective, rl.CameraOrthographic},
@@ -61,6 +53,9 @@ func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) *VxdiAppEditor {
 		ScreenWidth:                  800,
 		ScreenHeight:                 450,
 		LightDirection:               light,
+		CurrentTool:                  "select",
+		Tools:                        make(map[string]*Tool, 0),
+		ToolNames:                    make([]string, 0),
 		Guides:                       guides,
 		ConstructionHints:            constructionHints,
 	}
@@ -70,4 +65,11 @@ func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) *VxdiAppEditor {
 	app.CurrentColorIndex = 4
 
 	return &app
+}
+func (app *VxdiAppEditor) RegisterTool(name string, tool *Tool) {
+	tool.Name = name
+	app.Tools[name] = tool
+	app.ToolNames = append(app.ToolNames, name)
+}
+func (app *VxdiAppEditor) RenderUI() {
 }

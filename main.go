@@ -26,42 +26,42 @@ func Vector3Round(v rl.Vector3) rl.Vector3 {
 }
 
 // ///////////////////   func updateMousePosition(previousMousePosition *rl.Vector2, dbgMoveNumber *uint8) (rl.Vector2, bool) {
-// ///////////////////   	currentMousePosition := rl.GetMousePosition()
+// ///////////////////   	app.Mouse2 := rl.GetMousePosition()
 // ///////////////////   	isMousePositionChanged := false
-// ///////////////////   	if rl.Vector2Length(rl.Vector2Subtract(currentMousePosition, *previousMousePosition)) > 5 {
-// ///////////////////   		*previousMousePosition = currentMousePosition
+// ///////////////////   	if rl.Vector2Length(rl.Vector2Subtract(app.Mouse2, *previousMousePosition)) > 5 {
+// ///////////////////   		*previousMousePosition = app.Mouse2
 // ///////////////////   		isMousePositionChanged = true
 // ///////////////////   		*dbgMoveNumber = (*dbgMoveNumber + 1) % 255
 // ///////////////////   	}
-// ///////////////////   	return currentMousePosition, isMousePositionChanged
+// ///////////////////   	return app.Mouse2, isMousePositionChanged
 // ///////////////////   }
 // ///////////////////
 // ///////////////////   func getCursorPosition(camera rl.Camera, scene *Scene, app *VxdiAppEditor, cursor *Voxel, cursor2 *Voxel) {
-// ///////////////////   	mouseModel := scene.GetIntersections(&camera)
-// ///////////////////   	if mouseModel.CollisionHit == CollisionHitPlane || mouseModel.CollisionHit == CollisionHitNone {
-// ///////////////////   		mouseModel = app.Guides.GetIntersections(&camera)
-// ///////////////////   		if mouseModel.CollisionHit == CollisionHitVoxel {
-// ///////////////////   			mouseModel.CollisionHit = CollisionHitGuide
+// ///////////////////   	app.Mouse3 := scene.GetIntersections(&camera)
+// ///////////////////   	if app.Mouse3.CollisionHit == CollisionHitPlane || app.Mouse3.CollisionHit == CollisionHitNone {
+// ///////////////////   		app.Mouse3 = app.Guides.GetIntersections(&camera)
+// ///////////////////   		if app.Mouse3.CollisionHit == CollisionHitVoxel {
+// ///////////////////   			app.Mouse3.CollisionHit = CollisionHitGuide
 // ///////////////////   		}
 // ///////////////////   	}
 // ///////////////////
-// ///////////////////   	modelPointInt := Vector3Floor(mouseModel.Point)
-// ///////////////////   	modelPointNextInt := rl.Vector3Add(modelPointInt, rl.NewVector3(0, 1, 0))
+// ///////////////////   	app.Mouse3Int := Vector3Floor(app.Mouse3.Point)
+// ///////////////////   	app.Mouse3IntNext := rl.Vector3Add(app.Mouse3Int, rl.NewVector3(0, 1, 0))
 // ///////////////////
-// ///////////////////   	switch mouseModel.CollisionHit {
+// ///////////////////   	switch app.Mouse3.CollisionHit {
 // ///////////////////   	case CollisionHitNone:
-// ///////////////////   		modelPointNextInt = Vector3Round(mouseModel.Point)
-// ///////////////////   		modelPointInt = modelPointNextInt
+// ///////////////////   		app.Mouse3IntNext = Vector3Round(app.Mouse3.Point)
+// ///////////////////   		app.Mouse3Int = app.Mouse3IntNext
 // ///////////////////   	case CollisionHitVoxel:
-// ///////////////////   		modelPointInt = mouseModel.Voxel.Position
-// ///////////////////   		modelPointNextInt = rl.Vector3Add(mouseModel.Voxel.Position, mouseModel.Normal)
+// ///////////////////   		app.Mouse3Int = app.Mouse3.Voxel.Position
+// ///////////////////   		app.Mouse3IntNext = rl.Vector3Add(app.Mouse3.Voxel.Position, app.Mouse3.Normal)
 // ///////////////////   	case CollisionHitPlane, CollisionHitGuide:
-// ///////////////////   		modelPointNextInt = Vector3Round(mouseModel.Point)
-// ///////////////////   		modelPointInt = modelPointNextInt
+// ///////////////////   		app.Mouse3IntNext = Vector3Round(app.Mouse3.Point)
+// ///////////////////   		app.Mouse3Int = app.Mouse3IntNext
 // ///////////////////   	}
 // ///////////////////
-// ///////////////////   	cursor.Position = modelPointInt
-// ///////////////////   	cursor2.Position = modelPointNextInt
+// ///////////////////   	cursor.Position = app.Mouse3Int
+// ///////////////////   	cursor2.Position = app.Mouse3IntNext
 // ///////////////////   }
 func doNothing() {}
 func (app *VxdiAppEditor) AddGuides(point rl.Vector3) {
@@ -78,14 +78,13 @@ func (app *VxdiAppEditor) AddGuides(point rl.Vector3) {
 		}
 	}
 }
+func box_contains(box *rl.Rectangle, p *rl.Vector2) bool {
+	return (box.X <= p.X) && (p.X <= box.X+box.Width) && (box.Y <= p.Y) && (p.Y <= box.Y+box.Height)
+}
 func main() {
-	screenWidth := int32(1280)
-	screenHeight := int32(720)
-
-	rl.SetConfigFlags(rl.FlagMsaa4xHint) //ENABLE 4X MSAA IF AVAILABLE
-
-	rl.InitWindow(screenWidth, screenHeight, "raylib [shaders] example - basic lighting")
-	rl.SetConfigFlags(rl.FlagWindowResizable)
+	/// pointTool := MultistepTool2Points(func(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn) {
+	/// 	operator(scene, a, material, 0)
+	/// })
 
 	camera := rl.Camera3D{}
 	camera.Position = rl.NewVector3(2.0, 4.0, 6.0)
@@ -100,6 +99,7 @@ func main() {
 	}
 	scene := NewScene(true, light)
 	scene.AddVoxel(&Voxel{Position: rl.Vector3{X: 0, Y: 1, Z: 2}, Material: rl.Red})
+	// scene.ImportScene("temp.exp.vxdi")
 	cursor1 := NewVoxel()
 	cursor1.Material = rl.Red
 	cursor2 := NewVoxel()
@@ -121,63 +121,127 @@ func main() {
 	/// var ctrl, leftCtrl int
 	showHelp := false // Using byte instead of char, since Go doesn't have a char type. Byte is an alias for uint8.
 	windowShouldClose := false
-	currentMousePosition := rl.GetMousePosition() // Direct assignment; Go infers type from the function's return value.
-	previousMousePosition := currentMousePosition // Copy the value from currentMousePosition.
 	isMousePositionChanged := true
 	var dbgMoveNumber uint8 = 0 // Unsigned char in C is equivalent to uint8 in Go.
 	app := NewVxdiAppEditor(&camera, light)
+	app.Mouse2 = rl.GetMousePosition()  // Direct assignment; Go infers type from the function's return value.
+	previousMousePosition := app.Mouse2 // Copy the value from app.Mouse2.
 	app.ConstructionHints.AddVoxel(cursor1)
 	app.ConstructionHints.AddVoxel(cursor2)
 
+	rl.SetConfigFlags(rl.FlagMsaa4xHint | rl.FlagWindowResizable)
+
+	rl.InitWindow(app.ScreenWidth, app.ScreenHeight, "raylib [shaders] example - basic lighting")
+
+	app.Mouse3 = scene.GetIntersections(&camera)
+
+	app.Mouse3Int = Vector3Floor(app.Mouse3.Point)
+	app.Mouse3IntNext = rl.Vector3Add(app.Mouse3Int, rl.NewVector3(0, 1, 0))
+
+	helpTool := NewTool(2, func(t *Tool) {
+		app.Status = fmt.Sprintf("help tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	}, func(t *Tool) {
+		app.Status = fmt.Sprintf("help tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	})
+	selectTool := NewTool(2, func(t *Tool) {
+		app.Status = fmt.Sprintf("select tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	}, func(t *Tool) {
+		app.Status = fmt.Sprintf("select tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	})
+	voxelTool := NewTool(1, func(t *Tool) {
+		app.Status = fmt.Sprintf("voxel tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	}, func(t *Tool) {
+		lastPoint := t.Points[len(t.Points)-1]
+		if rl.IsKeyDown(rl.KeyLeftAlt) {
+			app.Status = fmt.Sprintf("delete voxel : app.Mouse3Int:%v,app.Mouse3IntNext:%v,points:%v, point:%v\n", app.Mouse3Int, app.Mouse3IntNext, t.Points, lastPoint)
+			scene.RemoveVoxel(app.Mouse3Int.X, app.Mouse3Int.Y, app.Mouse3Int.Z)
+		} else {
+			app.Status = fmt.Sprintf("add voxel : app.Mouse3Int:%v,app.Mouse3IntNext:%v,points:%v, point:%v\n", app.Mouse3Int, app.Mouse3IntNext, t.Points, lastPoint)
+			scene.AddVoxel(InitVoxel(app.Mouse3IntNext.X, app.Mouse3IntNext.Y, app.Mouse3IntNext.Z, rl.Red))
+		}
+	})
+	lineTool := NewTool(2, func(t *Tool) {
+		app.Status = fmt.Sprintf("line tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	}, func(t *Tool) {
+		app.Status = fmt.Sprintf("line tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	})
+	structureTool := NewTool(2, func(t *Tool) {
+		app.Status = fmt.Sprintf("structure tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	}, func(t *Tool) {
+		app.Status = fmt.Sprintf("structure tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	})
+	shellTool := NewTool(2, func(t *Tool) {
+		app.Status = fmt.Sprintf("shell tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	}, func(t *Tool) {
+		app.Status = fmt.Sprintf("shell tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	})
+	volumeTool := NewTool(2, func(t *Tool) {
+		app.Status = fmt.Sprintf("volume tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	}, func(t *Tool) {
+		app.Status = fmt.Sprintf("volume tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+	})
+	app.RegisterTool("help", helpTool)
+	app.RegisterTool("select", selectTool)
+	app.RegisterTool("voxel", voxelTool)
+	app.RegisterTool("line", lineTool)
+	app.RegisterTool("structure", structureTool)
+	app.RegisterTool("shell", shellTool)
+	app.RegisterTool("volume", volumeTool)
+
 	for !rl.WindowShouldClose() && !windowShouldClose {
+		app.ScreenWidth = int32(rl.GetScreenWidth())
+		app.ScreenHeight = int32(rl.GetScreenHeight())
+		drawBox := rl.NewRectangle(300, 0, float32(app.ScreenWidth)-364, float32(app.ScreenHeight)-40)
+		rightPanelBox := rl.NewRectangle(float32(app.ScreenWidth)-64, 0, 64, float32(64*len(app.ToolNames)))
+		leftPanelBox := rl.NewRectangle(0, 0, 300, float32(app.ScreenHeight)-40)
+
 		// update mouse model coordinates
 
-		currentMousePosition := rl.GetMousePosition()
+		app.Mouse2 = (rl.GetMousePosition())
 		isMousePositionChanged = false
-		if rl.Vector2Length(rl.Vector2Subtract(currentMousePosition, previousMousePosition)) > 5 {
-			previousMousePosition = currentMousePosition
+		if rl.Vector2Length(rl.Vector2Subtract(app.Mouse2, previousMousePosition)) > 5 {
+			previousMousePosition = app.Mouse2
 			isMousePositionChanged = true
 			dbgMoveNumber = (dbgMoveNumber + 1) % 255
 		}
-		mouseModel := scene.GetIntersections(&camera)
-		if mouseModel.CollisionHit == CollisionHitPlane || mouseModel.CollisionHit == CollisionHitNone {
-			mouseModel = app.Guides.GetIntersections(&camera)
-			if mouseModel.CollisionHit == CollisionHitVoxel {
-				mouseModel.CollisionHit = CollisionHitGuide
+		app.Mouse3 = scene.GetIntersections(&camera)
+		if app.Mouse3.CollisionHit == CollisionHitPlane || app.Mouse3.CollisionHit == CollisionHitNone {
+			app.Mouse3 = app.Guides.GetIntersections(&camera)
+			if app.Mouse3.CollisionHit == CollisionHitVoxel {
+				app.Mouse3.CollisionHit = CollisionHitGuide
 			}
 		}
 
-		modelPointInt := Vector3Floor(mouseModel.Point)
-		modelPointNextInt := rl.Vector3Add(modelPointInt, rl.NewVector3(0, 1, 0))
+		app.Mouse3Int = Vector3Floor(app.Mouse3.Point)
+		app.Mouse3IntNext = rl.Vector3Add(app.Mouse3Int, rl.NewVector3(0, 1, 0))
 
-		switch mouseModel.CollisionHit {
+		switch app.Mouse3.CollisionHit {
 		case CollisionHitNone:
-			modelPointNextInt = Vector3Round(mouseModel.Point)
-			modelPointInt = modelPointNextInt
+			app.Mouse3IntNext = Vector3Round(app.Mouse3.Point)
+			app.Mouse3Int = app.Mouse3IntNext
 		case CollisionHitVoxel:
-			modelPointInt = mouseModel.Voxel.Position
-			modelPointNextInt = rl.Vector3Add(mouseModel.Voxel.Position, mouseModel.Normal)
+			app.Mouse3Int = app.Mouse3.Voxel.Position
+			app.Mouse3IntNext = rl.Vector3Add(app.Mouse3.Voxel.Position, app.Mouse3.Normal)
 		case CollisionHitPlane, CollisionHitGuide:
-			modelPointNextInt = Vector3Round(mouseModel.Point)
-			modelPointInt = modelPointNextInt
+			app.Mouse3IntNext = Vector3Round(app.Mouse3.Point)
+			app.Mouse3Int = app.Mouse3IntNext
+		}
+		if rl.IsKeyPressed(rl.KeyLeftAlt) {
+			app.Mouse3IntNext = app.Mouse3Int
 		}
 
-		cursor1.Position = modelPointInt
-		cursor2.Position = modelPointNextInt
+		cursor1.Position = app.Mouse3Int
+		cursor2.Position = app.Mouse3IntNext
 
 		if isMousePositionChanged || showHelp {
-			// fmt.Printf("mouseMoved [%d] : (%v) {%v} \n", dbgMoveNumber, currentMousePosition, modelPointNextInt)
+			// fmt.Printf("mouseMoved [%d] : (%v) {%v} \n", dbgMoveNumber, app.Mouse2, app.Mouse3IntNext)
 			doNothing()
 		}
-		if rl.IsMouseButtonReleased(rl.MouseButtonLeft) && !rl.IsKeyDown(rl.KeyLeftControl) && !rl.IsKeyDown(rl.KeyLeftShift) {
-			if rl.IsKeyDown(rl.KeyLeftAlt) {
-				scene.RemoveVoxel(modelPointInt.X, modelPointInt.Y, modelPointInt.Z)
-			} else {
-				scene.AddVoxel(InitVoxel(modelPointNextInt.X, modelPointNextInt.Y, modelPointNextInt.Z, rl.Red))
-			}
+		if box_contains(&drawBox, &app.Mouse2) && rl.IsMouseButtonReleased(rl.MouseButtonLeft) && !rl.IsKeyDown(rl.KeyLeftControl) && !rl.IsKeyDown(rl.KeyLeftShift) {
+			app.Tools[app.CurrentTool].Next(app.Mouse3IntNext)
 		}
 		orbit.ControlCamera()
-		app.AddGuides(modelPointInt)
+		app.AddGuides(app.Mouse3Int)
 
 		rl.UpdateCamera(&camera, rl.CameraCustom)
 
@@ -189,48 +253,76 @@ func main() {
 
 		rl.DrawGrid(20, 1.0)
 		scene.Draw(1, light)
-		/// for _, v := range app.Guides.Voxels {
-		/// 	rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
-		/// }
-		app.Guides.Draw(2, light)
-		//rl.DrawCubeWires(cursor1.Position, 1, 1, 1, cursor1.Material)
-		//rl.DrawCubeWires(cursor2.Position, 1, 1, 1, cursor2.Material)
-		app.ConstructionHints.Draw(2, light)
-
 		// You can then use Raylib functions to check for intersections, etc.
-		if currentMousePosition.X > 200 && currentMousePosition.X < float32(app.ScreenWidth-70) {
+		if box_contains(&drawBox, &app.Mouse2) {
+			/// for _, v := range app.Guides.Voxels {
+			/// 	rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+			/// }
+			app.Guides.Draw(2, light)
+			//rl.DrawCubeWires(cursor1.Position, 1, 1, 1, cursor1.Material)
+			//rl.DrawCubeWires(cursor2.Position, 1, 1, 1, cursor2.Material)
+			app.ConstructionHints.Draw(2, light)
+
 			rl.DrawLine3D(
-				mouseModel.Point,
+				app.Mouse3.Point,
 				rl.Vector3Add(
-					mouseModel.Point,
+					app.Mouse3.Point,
 					rl.NewVector3(
-						mouseModel.Normal.X*1,
-						mouseModel.Normal.Y*1,
-						mouseModel.Normal.Z*1,
+						app.Mouse3.Normal.X*1,
+						app.Mouse3.Normal.Y*1,
+						app.Mouse3.Normal.Z*1,
 					),
 				),
 				rl.NewColor(
-					uint8(mouseModel.Normal.X*255),
-					uint8(mouseModel.Normal.Y*255),
-					uint8(mouseModel.Normal.Z*255),
+					uint8(app.Mouse3.Normal.X*255),
+					uint8(app.Mouse3.Normal.Y*255),
+					uint8(app.Mouse3.Normal.Z*255),
 					255,
 				))
-			InitVoxel(mouseModel.Point.X, mouseModel.Point.Y, mouseModel.Point.Z, rl.Blue).DrawShaded(light, VOXEL_SZ2/2)
+			InitVoxel(app.Mouse3.Point.X, app.Mouse3.Point.Y, app.Mouse3.Point.Z, rl.Blue).DrawShaded(light, VOXEL_SZ2/2)
 		}
 		// for _, v := range app.ConstructionHints.Voxels {
 		// 	rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
 		// }
-		// rl.DrawLine3D(rl.NewVector3(0, 0, 0), modelPointInt, rl.Green)
+		// rl.DrawLine3D(rl.NewVector3(0, 0, 0), app.Mouse3Int, rl.Green)
 
 		rl.EndMode3D()
+		rl.DrawRectangleLinesEx(leftPanelBox, 2, rl.Red)
+		rl.DrawRectangleLinesEx(rightPanelBox, 2, rl.Green)
+		rl.DrawRectangleLinesEx(drawBox, 2, rl.Blue)
+
+		posy64 := int32(app.Mouse2.Y/64) * 64
+		if box_contains(&rightPanelBox, &app.Mouse2) {
+			rl.DrawRectangle(int32(app.ScreenWidth)-64, posy64, 64, 64, rl.NewColor(127, 255, 0, 127))
+		}
+		for index, toolName := range app.ToolNames {
+			func(i int, name string) {
+				if app.CurrentTool == name {
+					rl.DrawRectangle(int32(app.ScreenWidth)-64, 64*int32(i), 64, 64, rl.NewColor(255, 127, 127, 255))
+				}
+				if box_contains(&rightPanelBox, &app.Mouse2) && int32(posy64/64) == int32(i) && rl.IsMouseButtonReleased(rl.MouseButtonLeft) {
+					fmt.Printf("setting mode to %s\n", name)
+					app.CurrentTool = name
+					for _, t := range app.Tools {
+						t.Reset()
+					}
+				}
+				rl.DrawRectangleLines(int32(app.ScreenWidth)-64, int32(i)*64, 64, 64, rl.NewColor(127, 255, 0, 255))
+				rl.DrawText(name, int32(app.ScreenWidth)-64, int32(i)*64+48, 12, rl.NewColor(0, 0, 0, 255))
+			}(index, toolName)
+		}
 
 		rl.DrawFPS(10, 10)
 
-		status = fmt.Sprintf("scene: %d, guides: %d, helpers: %d, mouse [%d] : (%v) {%v} \n", len(scene.Voxels), len(app.Guides.Voxels), len(app.ConstructionHints.Voxels), dbgMoveNumber, currentMousePosition, modelPointNextInt)
+		status = fmt.Sprintf("current tool : %s, scene: %d, guides: %d, helpers: %d, mouse [%d] : (%v) {%v} \n", app.CurrentTool, len(scene.Voxels), len(app.Guides.Voxels), len(app.ConstructionHints.Voxels), dbgMoveNumber, app.Mouse2, app.Mouse3IntNext)
 		rl.DrawText(status, 10, 40, 20, rl.Black)
 
-		rl.EndDrawing()
-	}
+		rl.DrawText(app.Status, 0, app.ScreenHeight-20, 20, rl.Black)
 
+		rl.EndDrawing()
+		// time.Sleep(1000000000)
+	}
+	// scene.SaveScene("temp.scene.vxdi")
+	// scene.ExportScene("temp.exp.vxdi")
 	rl.CloseWindow()
 }

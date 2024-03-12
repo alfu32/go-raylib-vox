@@ -30,9 +30,10 @@ func KeyForVoxel(pos rl.Vector3) string {
 	return fmt.Sprintf("%f,%f,%f", pos.X, pos.Y, pos.Z)
 }
 func (voxel *Voxel) GetBoundingBox() rl.BoundingBox {
+	pos := Vector3Round(voxel.Position)
 	return rl.BoundingBox{
-		Min: rl.NewVector3(voxel.Position.X-VOXEL_SZ2, voxel.Position.Y-VOXEL_SZ2, voxel.Position.Z-VOXEL_SZ2),
-		Max: rl.NewVector3(voxel.Position.X+VOXEL_SZ2, voxel.Position.Y+VOXEL_SZ2, voxel.Position.Z+VOXEL_SZ2),
+		Min: rl.NewVector3(pos.X-VOXEL_SZ2, pos.Y-VOXEL_SZ2, pos.Z-VOXEL_SZ2),
+		Max: rl.NewVector3(pos.X+VOXEL_SZ2, pos.Y+VOXEL_SZ2, pos.Z+VOXEL_SZ2),
 	}
 }
 
@@ -68,39 +69,40 @@ func drawTriangle(p1, p2, p3 rl.Vector3, color rl.Color) {
 func (voxel *Voxel) DrawShaded(light VxdiLight, sz float32) {
 	sz2 := sz / 2
 	n := rl.Vector3Normalize(light.Direction)
+	pos := Vector3Round(voxel.Position)
 
 	// Define vertices for each face of the cube
 	vertices := []rl.Vector3{
 		// Front face
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z + sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z + sz2},
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z + sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z + sz2},
+		{X: pos.X - sz2, Y: pos.Y - sz2, Z: pos.Z + sz2},
+		{X: pos.X + sz2, Y: pos.Y - sz2, Z: pos.Z + sz2},
+		{X: pos.X - sz2, Y: pos.Y + sz2, Z: pos.Z + sz2},
+		{X: pos.X + sz2, Y: pos.Y + sz2, Z: pos.Z + sz2},
 		// Back face
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z - sz2},
+		{X: pos.X - sz2, Y: pos.Y - sz2, Z: pos.Z - sz2},
+		{X: pos.X - sz2, Y: pos.Y + sz2, Z: pos.Z - sz2},
+		{X: pos.X + sz2, Y: pos.Y - sz2, Z: pos.Z - sz2},
+		{X: pos.X + sz2, Y: pos.Y + sz2, Z: pos.Z - sz2},
 		// Top face
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z + sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z + sz2},
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z - sz2},
+		{X: pos.X - sz2, Y: pos.Y + sz2, Z: pos.Z + sz2},
+		{X: pos.X + sz2, Y: pos.Y + sz2, Z: pos.Z + sz2},
+		{X: pos.X - sz2, Y: pos.Y + sz2, Z: pos.Z - sz2},
+		{X: pos.X + sz2, Y: pos.Y + sz2, Z: pos.Z - sz2},
 		// Bottom face
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z + sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z + sz2},
+		{X: pos.X - sz2, Y: pos.Y - sz2, Z: pos.Z - sz2},
+		{X: pos.X + sz2, Y: pos.Y - sz2, Z: pos.Z - sz2},
+		{X: pos.X - sz2, Y: pos.Y - sz2, Z: pos.Z + sz2},
+		{X: pos.X + sz2, Y: pos.Y - sz2, Z: pos.Z + sz2},
 		// Left face
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z + sz2},
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X - sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z + sz2},
+		{X: pos.X - sz2, Y: pos.Y - sz2, Z: pos.Z - sz2},
+		{X: pos.X - sz2, Y: pos.Y - sz2, Z: pos.Z + sz2},
+		{X: pos.X - sz2, Y: pos.Y + sz2, Z: pos.Z - sz2},
+		{X: pos.X - sz2, Y: pos.Y + sz2, Z: pos.Z + sz2},
 		// Right face
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z - sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y - sz2, Z: voxel.Position.Z + sz2},
-		{X: voxel.Position.X + sz2, Y: voxel.Position.Y + sz2, Z: voxel.Position.Z + sz2},
+		{X: pos.X + sz2, Y: pos.Y - sz2, Z: pos.Z - sz2},
+		{X: pos.X + sz2, Y: pos.Y + sz2, Z: pos.Z - sz2},
+		{X: pos.X + sz2, Y: pos.Y - sz2, Z: pos.Z + sz2},
+		{X: pos.X + sz2, Y: pos.Y + sz2, Z: pos.Z + sz2},
 	}
 
 	// Draw the cube using triangle strips with shaded colors
