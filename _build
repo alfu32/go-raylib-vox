@@ -1,0 +1,31 @@
+BUILD=build
+
+
+rm -rf $BUILD
+
+mkdir -p $BUILD/windows
+mkdir -p $BUILD/linux
+mkdir -p $BUILD/wasm
+mkdir -p $BUILD/android
+mkdir -p $BUILD/darwin
+mkdir -p $BUILD/js
+
+goos=$GOOS
+goarch=$GOARCH
+echo "building on $goos / $goarch"
+
+export GOOS=js      ; export GOARCH=wasm    ;echo "build for $GOOS/$GOARCH";  #go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH
+export GOOS=wasip1  ; export GOARCH=wasm    ;echo "build for $GOOS/$GOARCH";  #go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH
+export GOOS=linux   ; export GOARCH=amd64   ;echo "build for $GOOS/$GOARCH";  go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH
+export GOOS=linux   ; export GOARCH=arm64   ;echo "build for $GOOS/$GOARCH";  #go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH
+export GOOS=linux   ; export GOARCH=riscv64 ;echo "build for $GOOS/$GOARCH";  #go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH
+export GOOS=windows ; export GOARCH=amd64   ;echo "build for $GOOS/$GOARCH";  go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH.exe
+export GOOS=windows ; export GOARCH=arm64   ;echo "build for $GOOS/$GOARCH";  go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH.exe
+export GOOS=android ; export GOARCH=arm64   ;echo "build for $GOOS/$GOARCH";  #go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH
+export GOOS=darwin  ; export GOARCH=amd64   ;echo "build for $GOOS/$GOARCH";  #go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH
+export GOOS=darwin  ; export GOARCH=arm64   ;echo "build for $GOOS/$GOARCH";  #go build -o $BUILD/$GOOS/voxd3i-$GOOS-$GOARCH
+
+export GOOS=$goos  ; export GOARCH=$goarch  ;
+
+
+echo "building on $goos / $goarch finished "
