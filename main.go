@@ -166,14 +166,36 @@ func main() {
 		app.Status = fmt.Sprintf("line tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
 	})
 	structureTool := NewTool(2, func(t *Tool) {
-		app.Status = fmt.Sprintf("structure tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+		app.Status = fmt.Sprintf("structure tool not finished : points:%v, point:%v\n", t.Points[0], app.Mouse3IntNext)
+		app.ConstructionHints.Clear()
+		if t.Current == 1 {
+			RasterizeStructureCube(t.Points[0], app.Mouse3Int, app.ConstructionHints, rl.Fade(rl.Red, 0.5), 12, func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) {
+				app.ConstructionHints.AddVoxelAtPoint(&position, material)
+			})
+		} else {
+			app.ConstructionHints.AddVoxelAtPoint(&app.Mouse3Int, app.CurrentColor)
+		}
 	}, func(t *Tool) {
 		app.Status = fmt.Sprintf("structure tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+		RasterizeStructureCube(t.Points[0], t.Points[1], scene, rl.Red, 12, func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) {
+			scene.AddVoxelAtPoint(&position, material)
+		})
 	})
 	shellTool := NewTool(2, func(t *Tool) {
 		app.Status = fmt.Sprintf("shell tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+		app.ConstructionHints.Clear()
+		if t.Current == 1 {
+			RasterizeHollowCube(t.Points[0], app.Mouse3Int, app.ConstructionHints, rl.Fade(rl.Red, 0.5), 12, func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) {
+				app.ConstructionHints.AddVoxelAtPoint(&position, material)
+			})
+		} else {
+			app.ConstructionHints.AddVoxelAtPoint(&app.Mouse3Int, app.CurrentColor)
+		}
 	}, func(t *Tool) {
 		app.Status = fmt.Sprintf("shell tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
+		RasterizeHollowCube(t.Points[0], t.Points[1], scene, rl.Red, 12, func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) {
+			scene.AddVoxelAtPoint(&position, material)
+		})
 	})
 	volumeTool := NewTool(2, func(t *Tool) {
 		app.Status = fmt.Sprintf("volume tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
@@ -234,6 +256,7 @@ func main() {
 		cursor2.Position = app.Mouse3IntNext
 
 		if isMousePositionChanged || showHelp {
+			app.Tools[app.CurrentTool].OnChanged(app.Tools[app.CurrentTool])
 			// fmt.Printf("mouseMoved [%d] : (%v) {%v} \n", dbgMoveNumber, app.Mouse2, app.Mouse3IntNext)
 			doNothing()
 		}
@@ -253,15 +276,15 @@ func main() {
 
 		rl.DrawGrid(20, 1.0)
 		scene.Draw(1, light)
+		/// for _, v := range app.Guides.Voxels {
+		/// 	rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+		/// }
+		app.Guides.Draw(2, light)
+		//rl.DrawCubeWires(cursor1.Position, 1, 1, 1, cursor1.Material)
+		//rl.DrawCubeWires(cursor2.Position, 1, 1, 1, cursor2.Material)
+		app.ConstructionHints.Draw(2, light)
 		// You can then use Raylib functions to check for intersections, etc.
 		if box_contains(&drawBox, &app.Mouse2) {
-			/// for _, v := range app.Guides.Voxels {
-			/// 	rl.DrawCubeWires(v.Position, VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
-			/// }
-			app.Guides.Draw(2, light)
-			//rl.DrawCubeWires(cursor1.Position, 1, 1, 1, cursor1.Material)
-			//rl.DrawCubeWires(cursor2.Position, 1, 1, 1, cursor2.Material)
-			app.ConstructionHints.Draw(2, light)
 
 			rl.DrawLine3D(
 				app.Mouse3.Point,

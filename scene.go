@@ -30,6 +30,11 @@ func NewScene(is_persisted bool, light VxdiLight) *Scene {
 }
 
 // AddVoxel adds a new voxel to the scene. If a voxel already exists at the given coordinates, it updates the existing voxel.
+func (s *Scene) Clear() {
+	s.Voxels = make(map[string]*Voxel)
+}
+
+// AddVoxel adds a new voxel to the scene. If a voxel already exists at the given coordinates, it updates the existing voxel.
 func (s *Scene) AddVoxel(v *Voxel) {
 	key := fmt.Sprintf("%d,%d,%d", int32(v.Position.X), int32(v.Position.Y), int32(v.Position.Z))
 	fmt.Printf("Adding Voxel[%s] %v, len %d\n", key, v, len(s.Voxels))
