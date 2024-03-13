@@ -5,11 +5,11 @@ import (
 )
 
 // VoxelOperatorFn defines a function type in Go that matches the C typedef for the voxel operator function.
-type VoxelOperatorFn func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint)
+type VoxelOperatorFn func(position rl.Vector3)
 type Builder2Points func(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn)
 
 // rasterizeLine function to rasterize a line between two 3D points in Go.
-func RasterizeLine(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn) {
+func RasterizeLine(a, b rl.Vector3, operator VoxelOperatorFn) {
 	dx := b.X - a.X
 	dy := b.Y - a.Y
 	dz := b.Z - a.Z
@@ -42,7 +42,7 @@ func RasterizeLine(a, b rl.Vector3, scene *Scene, material rl.Color, materialID 
 				// Calculate the point on the line
 				p0 := rl.NewVector3(a.X+t*ab.X, a.Y+t*ab.Y, a.Z+t*ab.Z)
 				if rl.Vector3Distance(p0, p) <= 0.867 {
-					operator(scene, p, material, materialID)
+					operator(p)
 				}
 			}
 		}
@@ -50,7 +50,7 @@ func RasterizeLine(a, b rl.Vector3, scene *Scene, material rl.Color, materialID 
 }
 
 // RasterizeSolidCube function to rasterize a solid cube given two 3D points.
-func RasterizeSolidCube(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn) {
+func RasterizeSolidCube(a, b rl.Vector3, operator VoxelOperatorFn) {
 	// Calculate the differences between points
 	// dx := b.X - a.X
 	// dy := b.Y - a.Y
@@ -68,38 +68,38 @@ func RasterizeSolidCube(a, b rl.Vector3, scene *Scene, material rl.Color, materi
 		for y := cy0; y <= cy1; y++ {
 			for z := cz0; z <= cz1; z++ {
 				p := rl.NewVector3(float32(x), float32(y), float32(z))
-				operator(scene, p, material, materialID)
+				operator(p)
 			}
 		}
 	}
 }
-func RasterizeHollowCube(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn) {
-	RasterizeSolidCube(a, rl.NewVector3(a.X, b.Y, b.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(b.X, a.Y, a.Z), b, scene, material, materialID, operator)
+func RasterizeHollowCube(a, b rl.Vector3, operator VoxelOperatorFn) {
+	RasterizeSolidCube(a, rl.NewVector3(a.X, b.Y, b.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(b.X, a.Y, a.Z), b, operator)
 
-	RasterizeSolidCube(a, rl.NewVector3(b.X, a.Y, b.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, a.Z), b, scene, material, materialID, operator)
+	RasterizeSolidCube(a, rl.NewVector3(b.X, a.Y, b.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, a.Z), b, operator)
 
-	RasterizeSolidCube(a, rl.NewVector3(b.X, b.Y, a.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(a.X, a.Y, b.Z), b, scene, material, materialID, operator)
+	RasterizeSolidCube(a, rl.NewVector3(b.X, b.Y, a.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(a.X, a.Y, b.Z), b, operator)
 }
 
 // RasterizeStructureCube rasterizes a structured cube by drawing its skeletal structure.
-func RasterizeStructureCube(a, b rl.Vector3, scene *Scene, material rl.Color, materialID uint, operator VoxelOperatorFn) {
-	RasterizeSolidCube(a, rl.NewVector3(b.X, a.Y, a.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(a, rl.NewVector3(a.X, b.Y, a.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(b.X, a.Y, a.Z), rl.NewVector3(b.X, b.Y, a.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, a.Z), rl.NewVector3(b.X, b.Y, a.Z), scene, material, materialID, operator)
+func RasterizeStructureCube(a, b rl.Vector3, operator VoxelOperatorFn) {
+	RasterizeSolidCube(a, rl.NewVector3(b.X, a.Y, a.Z), operator)
+	RasterizeSolidCube(a, rl.NewVector3(a.X, b.Y, a.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(b.X, a.Y, a.Z), rl.NewVector3(b.X, b.Y, a.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, a.Z), rl.NewVector3(b.X, b.Y, a.Z), operator)
 
 	// Generate edges for the opposite face
-	RasterizeSolidCube(rl.NewVector3(a.X, a.Y, b.Z), rl.NewVector3(b.X, a.Y, b.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(a.X, a.Y, b.Z), rl.NewVector3(a.X, b.Y, b.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(b.X, a.Y, b.Z), b, scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, b.Z), b, scene, material, materialID, operator)
+	RasterizeSolidCube(rl.NewVector3(a.X, a.Y, b.Z), rl.NewVector3(b.X, a.Y, b.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(a.X, a.Y, b.Z), rl.NewVector3(a.X, b.Y, b.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(b.X, a.Y, b.Z), b, operator)
+	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, b.Z), b, operator)
 
 	// Generate edges connecting both faces
-	RasterizeSolidCube(a, rl.NewVector3(a.X, a.Y, b.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(b.X, a.Y, a.Z), rl.NewVector3(b.X, a.Y, b.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, a.Z), rl.NewVector3(a.X, b.Y, b.Z), scene, material, materialID, operator)
-	RasterizeSolidCube(rl.NewVector3(b.X, b.Y, a.Z), b, scene, material, materialID, operator)
+	RasterizeSolidCube(a, rl.NewVector3(a.X, a.Y, b.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(b.X, a.Y, a.Z), rl.NewVector3(b.X, a.Y, b.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, a.Z), rl.NewVector3(a.X, b.Y, b.Z), operator)
+	RasterizeSolidCube(rl.NewVector3(b.X, b.Y, a.Z), b, operator)
 }

@@ -61,7 +61,7 @@ func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) *VxdiAppEditor {
 	}
 
 	// Assume FillColorCircle and other necessary initialization here
-	app.CurrentColor = app.Colors[4] // Example, assuming color initialization
+	app.CurrentColor = rl.Red // Example, assuming color initialization
 	app.CurrentColorIndex = 4
 
 	return &app

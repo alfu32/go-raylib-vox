@@ -121,41 +121,24 @@ func main() {
 			scene.AddVoxel(InitVoxel(app.Mouse3IntNext.X, app.Mouse3IntNext.Y, app.Mouse3IntNext.Z, rl.Red))
 		}
 	})
-	lineTool := NewTool(2, func(t *Tool) {
-		app.Status = fmt.Sprintf("line tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
-	}, func(t *Tool) {
-		app.Status = fmt.Sprintf("line tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
-	})
-	structureTool := NewTool(2, func(t *Tool) {
-		app.Status = fmt.Sprintf("structure tool not finished : points:%v, point:%v\n", t.Points[0], app.Mouse3IntNext)
-		app.ConstructionHints.Clear()
-		if t.Current == 1 {
-			RasterizeStructureCube(t.Points[0], app.Mouse3Int, app.ConstructionHints, rl.Fade(rl.Red, 0.5), 12, func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) {
-				app.ConstructionHints.AddVoxelAtPoint(&position, material)
-			})
-		} else {
-			app.ConstructionHints.AddVoxelAtPoint(&app.Mouse3Int, app.CurrentColor)
-		}
-	}, func(t *Tool) {
-		app.Status = fmt.Sprintf("structure tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
-		RasterizeStructureCube(t.Points[0], t.Points[1], scene, rl.Red, 12, func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) {
-			scene.AddVoxelAtPoint(&position, material)
-		})
-	})
+	lineTool := NewVxdiMultistepTool2Points(
+		rl.KeyLeftAlt,
+		RasterizeLine,
+	)
 	shellTool := NewTool(2, func(t *Tool) {
 		app.Status = fmt.Sprintf("shell tool not finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
 		app.ConstructionHints.Clear()
 		if t.Current == 1 {
-			RasterizeHollowCube(t.Points[0], app.Mouse3Int, app.ConstructionHints, rl.Fade(rl.Red, 0.5), 12, func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) {
-				app.ConstructionHints.AddVoxelAtPoint(&position, material)
+			RasterizeHollowCube(t.Points[0], app.Mouse3Int, func(position rl.Vector3) {
+				app.ConstructionHints.AddVoxelAtPoint(&position, rl.Fade(rl.Red, 0.5))
 			})
 		} else {
 			app.ConstructionHints.AddVoxelAtPoint(&app.Mouse3Int, app.CurrentColor)
 		}
 	}, func(t *Tool) {
 		app.Status = fmt.Sprintf("shell tool finished : points:%v, point:%v\n", t.Points, app.Mouse3IntNext)
-		RasterizeHollowCube(t.Points[0], t.Points[1], scene, rl.Red, 12, func(scene *Scene, position rl.Vector3, material rl.Color, materialID uint) {
-			scene.AddVoxelAtPoint(&position, material)
+		RasterizeHollowCube(t.Points[0], t.Points[1], func(position rl.Vector3) {
+			scene.AddVoxelAtPoint(&position, app.CurrentColor)
 		})
 	})
 	volumeTool := NewTool(2, func(t *Tool) {
