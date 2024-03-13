@@ -233,3 +233,19 @@ func (a *Voxel) Equals(b *Voxel) bool {
 		math.Abs(float64(a.Position.Y)-float64(a.Position.Y)) < 1 &&
 		math.Abs(float64(a.Position.Z)-float64(a.Position.Z)) < 1
 }
+
+func (voxel *Voxel) GetCorners() []rl.Vector3 {
+	c := voxel.Position
+	// s := VOXEL_SZ2
+	return []rl.Vector3{
+		{X: c.X + 0, Y: c.X + 0, Z: c.X + 0},
+		//{X: c.X + s, Y: c.X + s, Z: c.X + s},
+		// {X: c.X + s, Y: c.X + s, Z: c.X - s},
+		// {X: c.X + s, Y: c.X - s, Z: c.X + s},
+		// {X: c.X + s, Y: c.X - s, Z: c.X - s},
+		// {X: c.X - s, Y: c.X + s, Z: c.X + s},
+		// {X: c.X - s, Y: c.X + s, Z: c.X - s},
+		// {X: c.X - s, Y: c.X - s, Z: c.X + s},
+		// {X: c.X - s, Y: c.X - s, Z: c.X - s},
+	}
+}

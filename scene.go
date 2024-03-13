@@ -29,6 +29,7 @@ type Scene struct {
 	Light       VxdiDirectionalLight
 	IsPersisted bool
 	Filename    string
+	OnChange    func(sc *Scene)
 }
 
 // NewScene creates and returns a new instance of a Scene.
@@ -39,12 +40,14 @@ func NewScene(is_persisted bool, light VxdiDirectionalLight) *Scene {
 		Light:       light,
 		IsPersisted: is_persisted,
 		Filename:    "temp",
+		OnChange:    func(sc *Scene) {},
 	}
 }
 
 // AddVoxel adds a new voxel to the scene. If a voxel already exists at the given coordinates, it updates the existing voxel.
 func (s *Scene) Clear() {
 	s.Voxels = make(map[string]*Voxel)
+	s.OnChange(s)
 }
 
 // AddVoxel adds a new voxel to the scene. If a voxel already exists at the given coordinates, it updates the existing voxel.
@@ -54,6 +57,7 @@ func (s *Scene) AddVoxel(v *Voxel) {
 	if _, exists := s.Voxels[key]; !exists {
 		s.Voxels[key] = v
 		s.keys = append(s.keys, key)
+		//s.OnChange(s)
 	}
 
 	// fmt.Printf("Added Voxel %v, new len %d\n", v, len(s.Voxels))
@@ -77,6 +81,7 @@ func (s *Scene) RemoveVoxel(x, y, z float32) {
 	if _, exists := s.Voxels[key]; exists {
 		delete(s.Voxels, key)
 		s.keys = remove[string](s.keys, key)
+		//s.OnChange(s)
 	}
 
 }
@@ -144,6 +149,7 @@ func (scene *Scene) IntersectPoint(ray rl.Ray) Collision {
 // sceneRayIntersectPoint checks if a ray intersects any voxel in the scene and returns the nearest intersection if any.
 func (scene *Scene) IntersectPoints(ray rl.Ray) []Collision {
 	result := []Collision{}
+	result0 := []Collision{}
 
 	for i, voxel := range scene.Voxels { // Assuming scene.Voxels is a slice of Voxel
 		boundingBox := voxel.GetBoundingBox()
@@ -162,7 +168,7 @@ func (scene *Scene) IntersectPoints(ray rl.Ray) []Collision {
 	}
 
 	// Fallback check against a plane
-	fallbackBox := rl.NewBoundingBox(rl.NewVector3(-200.0, -0.6, -200.0), rl.NewVector3(200.0, -0.5, 200.0))
+	fallbackBox := rl.NewBoundingBox(rl.NewVector3(-200.0, 0.4, -200.0), rl.NewVector3(200.0, 0.5, 200.0))
 	collision := rl.GetRayCollisionBox(ray, fallbackBox)
 	result = append(result, Collision{
 		Hit:           false,
@@ -173,7 +179,13 @@ func (scene *Scene) IntersectPoints(ray rl.Ray) []Collision {
 		HitVoxelIndex: "none",
 		CollisionHit:  CollisionHitPlane,
 	})
-	return result
+	for _, c := range result {
+		if c.CollisionHit == CollisionHitVoxel && c.Distance <= 1 {
+			continue
+		}
+		result0 = append(result0, c)
+	}
+	return result0
 }
 
 // sceneGetIntersections checks for intersections between a ray (cast from the mouse position) and scene objects or a fallback plane.
@@ -183,7 +195,7 @@ func (scene *Scene) GetIntersections(camera *rl.Camera3D) Collision {
 
 	if !result.Hit {
 		// Fallback check against a plane
-		fallbackBox := rl.NewBoundingBox(rl.NewVector3(-200.0, -0.6, -200.0), rl.NewVector3(200.0, -0.5, 200.0))
+		fallbackBox := rl.NewBoundingBox(rl.NewVector3(-200.0, 0.4, -200.0), rl.NewVector3(200.0, 0.5, 200.0))
 		collision := rl.GetRayCollisionBox(ray, fallbackBox)
 		if collision.Hit {
 			result = Collision{
@@ -207,7 +219,7 @@ func (scene *Scene) GetVoxelShadow(voxel *Voxel, light *VxdiDirectionalLight) []
 
 	if len(result) == 0 {
 		// Fallback check against a plane
-		fallbackBox := rl.NewBoundingBox(rl.NewVector3(-200.0, -0.6, -200.0), rl.NewVector3(200.0, -0.5, 200.0))
+		fallbackBox := rl.NewBoundingBox(rl.NewVector3(-200.0, 0.4, -200.0), rl.NewVector3(200.0, 0.5, 200.0))
 		collision := rl.GetRayCollisionBox(ray, fallbackBox)
 		result = append(result, Collision{
 			Hit:           false,
@@ -237,6 +249,9 @@ func (scene *Scene) GetShadows(light *VxdiDirectionalLight) []Collision {
 	for _, key := range scene.keys {
 		voxel := scene.Voxels[key]
 		if math.Abs(float64(voxel.Position.Y)) < 1 {
+			continue
+		}
+		if voxel.Material.A < 200 {
 			continue
 		}
 		collisions := scene.GetVoxelShadow(voxel, light)

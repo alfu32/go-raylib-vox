@@ -71,7 +71,7 @@ func main() {
 	camera.Fovy = 45.0
 	camera.Projection = rl.CameraPerspective
 	light := VxdiDirectionalLight{
-		Direction:      rl.NewVector3(-1, -4, -2),
+		Direction:      rl.NewVector3(-1, -3, -2),
 		ShadowStrength: .5,
 		LightStrength:  .5,
 	}
@@ -83,13 +83,7 @@ func main() {
 
 	orbit := NewOrbit(&camera)
 
-	// lights[1] = NewLight(LightTypeDirectional, rl.NewVector3(2, 1, 2), rl.NewVector3(0, 0, 0), rl.Red, shader)
-
-	// lights[2] = NewLight(LightTypeDirectional, rl.NewVector3(-2, 1, 2), rl.NewVector3(0, 0, 0), rl.Green, shader)
-
-	// lights[3] = NewLight(LightTypeDirectional, rl.NewVector3(2, 1, -2), rl.NewVector3(0, 0, 0), rl.Blue, shader)
-
-	rl.SetTargetFPS(60)
+	rl.SetTargetFPS(25)
 
 	// loop globals
 
@@ -165,6 +159,11 @@ func main() {
 		fmt.Printf("working dir : %v\n", v)
 	}
 	app.Layer.ImportScene(filename)
+	sh := app.Layer.GetShadows(&app.DirectionalLight)
+	app.Layer.OnChange = func(sc *Scene) {
+
+		sh = app.Layer.GetShadows(&app.DirectionalLight)
+	}
 
 	for !rl.WindowShouldClose() && !windowShouldClose {
 		app.ScreenWidth = int32(rl.GetScreenWidth())
@@ -225,19 +224,18 @@ func main() {
 		rl.ClearBackground(rl.RayWhite)
 		rl.BeginMode3D(camera)
 
-		DrawGridAtPoint(rl.NewVector3(0, -0.5, 0), 20, 1.0)
+		DrawGridAtPoint(rl.NewVector3(0.5, 0.5, 0.5), 20, 1.0)
 		app.Layer.Draw(AppRenderShaded, light)
 		app.Guides.Draw(AppRenderWireframe, light)
 		app.ConstructionHints.Draw(AppRenderBrighten, light)
-		sh := app.Layer.GetShadows(&app.DirectionalLight)
-		shadowColor := rl.Fade(rl.DarkGray, 1)
+		shadowColor := rl.Fade(rl.DarkGray, 0.3)
 		// vv := rl.NewVector3(10, 10, 10)
 		// vn := rl.NewVector3(0, 1, 0)
 		///DrawDoubleSidedPlateWithNormal(&vv, vn, VOXEL_SZ, rl.Red)
 		for _, s := range sh {
 			// rl.DrawCubeV(s.Point, rl.Vector3CrossProduct(), shadowColor)
 			DrawPlateWithNormal(&s.Point, s.Normal, VOXEL_SZ, shadowColor)
-			//rl.DrawSphere(s.Point, .5, shadowColor)
+			// rl.DrawSphere(s.Point, .5, shadowColor)
 		}
 		if box_contains(&drawBox, &app.Mouse2) {
 			cursor1.DrawWireframe(app.DirectionalLight, 1.2)

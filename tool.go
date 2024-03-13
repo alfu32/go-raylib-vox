@@ -58,7 +58,7 @@ func NewTool2Steps(app *VxdiAppEditor, modKey int, rasterizer_fn func(a, b rl.Ve
 					app.Layer.AddVoxelAtPoint(&point, app.CurrentColor)
 				})
 			}
-
+			app.Layer.OnChange(app.Layer)
 		},
 	)
 	return tool
