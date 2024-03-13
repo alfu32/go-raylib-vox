@@ -7,13 +7,13 @@ import (
 )
 
 type Collision struct {
-	Hit          bool
-	Distance     float32
-	Point        rl.Vector3
-	Normal       rl.Vector3
-	Voxel        Voxel
-	VoxelIndex   string
-	CollisionHit CollisionHit
+	Hit           bool
+	Distance      float32
+	Point         rl.Vector3
+	Normal        rl.Vector3
+	HitVoxel      Voxel
+	HitVoxelIndex string
+	CollisionHit  CollisionHit
 }
 
 type CollisionHit int

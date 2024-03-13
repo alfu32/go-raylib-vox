@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -72,6 +73,106 @@ func (voxel *Voxel) DrawWireframe(light VxdiDirectionalLight, sz float32) {
 func (voxel *Voxel) DrawCube(light VxdiDirectionalLight, sz float32) {
 	rl.DrawCube(voxel.Position, sz, sz, sz, voxel.Material)
 }
+func DrawDoubleSidedPlateWithNormal(center *rl.Vector3, normal rl.Vector3, size float32, color rl.Color) {
+	p1 := rl.Vector3Add(*center, rl.Vector3Scale(normal, 0.1))
+	n2 := rl.NewVector3(normal.X*-1, normal.Y*-1, normal.Z*-1)
+	p2 := rl.Vector3Add(*center, rl.Vector3Scale(n2, 0.1))
+	DrawPlateWithNormal(&p1, normal, size, color)
+	DrawPlateWithNormal(&p2, normal, size, color)
+}
+func Vector3Dominant(v *rl.Vector3) (rl.Vector3, int32) {
+	x := float64(v.X)
+	y := float64(v.Y)
+	z := float64(v.Z)
+	if math.Abs(x) > math.Abs(y) && math.Abs(x) > math.Abs(z) {
+		if v.X > 0 {
+			return rl.NewVector3(1, 0, 0), 0
+		} else {
+			return rl.NewVector3(-1, 0, 0), 1
+		}
+	} else if math.Abs(y) > math.Abs(x) && math.Abs(y) > math.Abs(z) {
+		if v.Y > 0 {
+			return rl.NewVector3(0, 1, 0), 2
+		} else {
+			return rl.NewVector3(0, -1, 0), 3
+		}
+	} else {
+		if v.Z > 0 {
+			return rl.NewVector3(0, 0, 1), 4
+		} else {
+			return rl.NewVector3(0, 0, -1), 5
+		}
+	}
+}
+
+func DrawPlateWithNormal(pos *rl.Vector3, normal rl.Vector3, size float32, color rl.Color) {
+	revval := func(v float32) float32 {
+		if math.Abs(float64(v)) < 0.01 {
+			if v < 0 {
+				return -1
+			} else {
+				return 1
+			}
+		} else {
+			if v < 0 {
+				return -0.02
+			} else {
+				return 0.02
+			}
+		}
+	}
+	// Normalize the normal vector
+	n := rl.Vector3Normalize(normal)
+	dom, _ := Vector3Dominant(&n)
+	szx := revval(dom.X)*size/2 - 0.005
+	szy := revval(dom.Y)*size/2 - 0.005
+	szz := revval(dom.Z)*size/2 - 0.005
+	//pos0 := Vector3Round(*pos)
+	//pos = &pos0
+
+	// Define vertices for each face of the cube
+	vertices := []rl.Vector3{
+		// Front face
+		{X: pos.X - szx, Y: pos.Y - szy, Z: pos.Z + szz},
+		{X: pos.X + szx, Y: pos.Y - szy, Z: pos.Z + szz},
+		{X: pos.X - szx, Y: pos.Y + szy, Z: pos.Z + szz},
+		{X: pos.X + szx, Y: pos.Y + szy, Z: pos.Z + szz},
+		// Back face
+		{X: pos.X - szx, Y: pos.Y - szy, Z: pos.Z - szz},
+		{X: pos.X - szx, Y: pos.Y + szy, Z: pos.Z - szz},
+		{X: pos.X + szx, Y: pos.Y - szy, Z: pos.Z - szz},
+		{X: pos.X + szx, Y: pos.Y + szy, Z: pos.Z - szz},
+		// Top face
+		{X: pos.X - szx, Y: pos.Y + szy, Z: pos.Z + szz},
+		{X: pos.X + szx, Y: pos.Y + szy, Z: pos.Z + szz},
+		{X: pos.X - szx, Y: pos.Y + szy, Z: pos.Z - szz},
+		{X: pos.X + szx, Y: pos.Y + szy, Z: pos.Z - szz},
+		// Bottom face
+		{X: pos.X - szx, Y: pos.Y - szy, Z: pos.Z - szz},
+		{X: pos.X + szx, Y: pos.Y - szy, Z: pos.Z - szz},
+		{X: pos.X - szx, Y: pos.Y - szy, Z: pos.Z + szz},
+		{X: pos.X + szx, Y: pos.Y - szy, Z: pos.Z + szz},
+		// Left face
+		{X: pos.X - szx, Y: pos.Y - szy, Z: pos.Z - szz},
+		{X: pos.X - szx, Y: pos.Y - szy, Z: pos.Z + szz},
+		{X: pos.X - szx, Y: pos.Y + szy, Z: pos.Z - szz},
+		{X: pos.X - szx, Y: pos.Y + szy, Z: pos.Z + szz},
+		// Right face
+		{X: pos.X + szx, Y: pos.Y - szy, Z: pos.Z - szz},
+		{X: pos.X + szx, Y: pos.Y + szy, Z: pos.Z - szz},
+		{X: pos.X + szx, Y: pos.Y - szy, Z: pos.Z + szz},
+		{X: pos.X + szx, Y: pos.Y + szy, Z: pos.Z + szz},
+	}
+
+	// Draw the cube using triangle strips with shaded colors
+	DrawTriangleStrip3D(vertices[0:4], color)   //voxel.Paterial_color);// Front face
+	DrawTriangleStrip3D(vertices[4:8], color)   //voxel.Paterial_color);// Back face
+	DrawTriangleStrip3D(vertices[8:12], color)  // Top face
+	DrawTriangleStrip3D(vertices[12:16], color) // Bottom face
+	DrawTriangleStrip3D(vertices[16:20], color) // Left face
+	DrawTriangleStrip3D(vertices[20:24], color) // Right face
+	// Draw each face of the cube with shaded colors
+}
 func (voxel *Voxel) DrawShaded(light VxdiDirectionalLight, sz float32) {
 	sz2 := sz / 2
 	n := rl.Vector3Normalize(light.Direction)
@@ -126,3 +227,9 @@ func (voxel *Voxel) DrawShaded(light VxdiDirectionalLight, sz float32) {
 // Raylib Go does not directly support DrawTriangleStrip3D or ColorBrightness functions.
 // You would need to implement similar functionality in Go, possibly using other Raylib functions
 // such as rl.DrawTriangle3D or custom shader logic to achieve the shading effects based on light direction and strength.
+
+func (a *Voxel) Equals(b *Voxel) bool {
+	return math.Abs(float64(a.Position.X)-float64(a.Position.X)) < 1 &&
+		math.Abs(float64(a.Position.Y)-float64(a.Position.Y)) < 1 &&
+		math.Abs(float64(a.Position.Z)-float64(a.Position.Z)) < 1
+}

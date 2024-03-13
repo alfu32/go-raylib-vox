@@ -6,6 +6,7 @@ import (
 
 type VxdiAppEditor struct {
 	CurrentColor                 rl.Color
+	HistoryColors                []rl.Vector2
 	CurrentCameraProjection      rl.CameraProjection
 	CurrentCameraProjectionIndex uint
 	CameraProjections            [2]rl.CameraProjection
@@ -63,8 +64,19 @@ func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiDirectionalLight) *VxdiAppE
 
 	// Assume FillColorCircle and other necessary initialization here
 	app.CurrentColor = rl.Red // Example, assuming color initialization
+	app.AddColor(rl.Vector2{X: 2, Y: 0})
 
 	return &app
+}
+func (app *VxdiAppEditor) AddColor(color rl.Vector2) {
+	if len(app.HistoryColors) == 10 {
+		for k := 0; k < 9; k++ {
+			app.HistoryColors[k] = app.HistoryColors[k+1]
+			app.HistoryColors[9] = color
+		}
+	} else {
+		app.HistoryColors = append(app.HistoryColors, color)
+	}
 }
 func (app *VxdiAppEditor) RegisterTool(name string, tool *Tool) {
 	tool.Name = name
