@@ -6,8 +6,6 @@ import (
 
 type VxdiAppEditor struct {
 	CurrentColor                 rl.Color
-	CurrentColorIndex            uint
-	Colors                       [360]rl.Color
 	CurrentCameraProjection      rl.CameraProjection
 	CurrentCameraProjectionIndex uint
 	CameraProjections            [2]rl.CameraProjection
@@ -18,9 +16,10 @@ type VxdiAppEditor struct {
 	CameraModeNames              [5]string
 	ScreenWidth                  int32
 	ScreenHeight                 int32
+	Layer                        *Scene
 	Guides                       *Scene // Assume Scene is defined elsewhere
 	ConstructionHints            *Scene // Assume Scene is defined elsewhere
-	LightDirection               VxdiLight
+	DirectionalLight             VxdiDirectionalLight
 	CurrentTool                  string
 	Tools                        map[string]*Tool
 	ToolNames                    []string
@@ -31,13 +30,14 @@ type VxdiAppEditor struct {
 	Mouse3IntNext                rl.Vector3
 }
 
-func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) *VxdiAppEditor {
+func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiDirectionalLight) *VxdiAppEditor {
 	camera.Position = rl.NewVector3(10.0, 10.0, 10.0)
 	camera.Target = rl.NewVector3(0, 0, 0)
 	camera.Up = rl.NewVector3(0, 1, 0)
 	camera.Fovy = 45.0
 	camera.Projection = rl.CameraPerspective
 
+	layer0 := NewScene(false, light)            // Assuming SceneInit is defined elsewhere
 	guides := NewScene(false, light)            // Assuming SceneInit is defined elsewhere
 	constructionHints := NewScene(false, light) // Assuming SceneInit is defined elsewhere
 
@@ -52,17 +52,17 @@ func NewVxdiAppEditor(camera *rl.Camera3D, light VxdiLight) *VxdiAppEditor {
 		CameraModeNames:              [5]string{"FREE", "ORBITAL", "FIRST_PERSON", "THIRD_PERSON"},
 		ScreenWidth:                  800,
 		ScreenHeight:                 450,
-		LightDirection:               light,
+		DirectionalLight:             light,
 		CurrentTool:                  "select",
 		Tools:                        make(map[string]*Tool, 0),
 		ToolNames:                    make([]string, 0),
+		Layer:                        layer0,
 		Guides:                       guides,
 		ConstructionHints:            constructionHints,
 	}
 
 	// Assume FillColorCircle and other necessary initialization here
 	app.CurrentColor = rl.Red // Example, assuming color initialization
-	app.CurrentColorIndex = 4
 
 	return &app
 }

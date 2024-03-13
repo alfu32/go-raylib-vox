@@ -12,17 +12,30 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+type AppRenderType int
+
+const (
+	AppRenderDefault = AppRenderType(0b10000000) << iota
+	AppRenderBrighten
+	AppRenderDarken
+	AppRenderShaded
+	AppRenderTransparent
+	AppRenderWireframe
+)
+
 type Scene struct {
 	Voxels      map[string]*Voxel
-	Light       VxdiLight
+	keys        []string
+	Light       VxdiDirectionalLight
 	IsPersisted bool
 	Filename    string
 }
 
 // NewScene creates and returns a new instance of a Scene.
-func NewScene(is_persisted bool, light VxdiLight) *Scene {
+func NewScene(is_persisted bool, light VxdiDirectionalLight) *Scene {
 	return &Scene{
 		Voxels:      make(map[string]*Voxel),
+		keys:        make([]string, 0),
 		Light:       light,
 		IsPersisted: is_persisted,
 		Filename:    "temp",
@@ -37,18 +50,35 @@ func (s *Scene) Clear() {
 // AddVoxel adds a new voxel to the scene. If a voxel already exists at the given coordinates, it updates the existing voxel.
 func (s *Scene) AddVoxel(v *Voxel) {
 	key := fmt.Sprintf("%d,%d,%d", int32(v.Position.X), int32(v.Position.Y), int32(v.Position.Z))
-	fmt.Printf("Adding Voxel[%s] %v, len %d\n", key, v, len(s.Voxels))
-	s.Voxels[key] = v
-	fmt.Printf("Added Voxel %v, new len %d\n", v, len(s.Voxels))
+	// fmt.Printf("Adding Voxel[%s] %v, len %d\n", key, v, len(s.Voxels))
+	if _, exists := s.Voxels[key]; !exists {
+		s.Voxels[key] = v
+		s.keys = append(s.keys, key)
+	}
+
+	// fmt.Printf("Added Voxel %v, new len %d\n", v, len(s.Voxels))
 }
 func (s *Scene) AddVoxelAtPoint(p *rl.Vector3, mat rl.Color) {
 	s.AddVoxel(InitVoxel(p.X, p.Y, p.Z, mat))
+}
+func remove[T comparable](l []T, item T) []T {
+	out := make([]T, 0)
+	for _, element := range l {
+		if element != item {
+			out = append(out, element)
+		}
+	}
+	return out
 }
 
 // RemoveVoxel removes a voxel from the scene by its coordinates. If no voxel exists at those coordinates, it does nothing.
 func (s *Scene) RemoveVoxel(x, y, z float32) {
 	key := fmt.Sprintf("%d,%d,%d", int32(x), int32(y), int32(z))
-	delete(s.Voxels, key)
+	if _, exists := s.Voxels[key]; exists {
+		delete(s.Voxels, key)
+		s.keys = remove[string](s.keys, key)
+	}
+
 }
 
 // GetVoxel retrieves a voxel from the scene by its coordinates. It returns the voxel and a boolean indicating if it was found.
@@ -57,18 +87,27 @@ func (s *Scene) GetVoxel(x, y, z float32) (*Voxel, bool) {
 	voxel, exists := s.Voxels[key]
 	return voxel, exists
 }
-func (scene *Scene) Draw(typ uint8, light VxdiLight) {
-	for _, v := range scene.Voxels {
-		switch typ {
-		case 0: // type hint
-			rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
-		case 1: // type objects
-			v.DrawShaded(light, VOXEL_SZ)
-			rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
-		case 2: // type guides
-			rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ/4, VOXEL_SZ/4, VOXEL_SZ/4, rl.DarkGray)
-		}
 
+func (scene *Scene) Draw(typ AppRenderType, light VxdiDirectionalLight) {
+	for _, k := range scene.keys {
+		if v, ok := scene.Voxels[k]; ok {
+			switch typ {
+			case AppRenderDarken: // type hint
+				rl.DrawCube(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.ColorBrightness(v.Material, -0.3))
+				rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, v.Material)
+			case AppRenderBrighten: // type hint
+				rl.DrawCube(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.ColorBrightness(v.Material, 0.3))
+				rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, v.Material)
+			case AppRenderTransparent: // type hint
+				rl.DrawCube(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.Fade(v.Material, 0.3))
+				rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, v.Material)
+			case AppRenderShaded: // type objects
+				v.DrawShaded(light, VOXEL_SZ)
+				rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ, VOXEL_SZ, VOXEL_SZ, rl.DarkGray)
+			case AppRenderWireframe: // type guides
+				rl.DrawCubeWires(Vector3Round(v.Position), VOXEL_SZ/4, VOXEL_SZ/4, VOXEL_SZ/4, v.Material)
+			}
+		}
 	}
 }
 

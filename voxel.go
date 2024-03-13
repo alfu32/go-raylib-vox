@@ -66,7 +66,13 @@ func drawTriangle(p1, p2, p3 rl.Vector3, color rl.Color) {
 	// or more likely, making custom OpenGL calls if you need to fill the triangles.
 	rl.DrawTriangle3D(p1, p2, p3, color)
 }
-func (voxel *Voxel) DrawShaded(light VxdiLight, sz float32) {
+func (voxel *Voxel) DrawWireframe(light VxdiDirectionalLight, sz float32) {
+	rl.DrawCubeWires(voxel.Position, sz, sz, sz, voxel.Material)
+}
+func (voxel *Voxel) DrawCube(light VxdiDirectionalLight, sz float32) {
+	rl.DrawCube(voxel.Position, sz, sz, sz, voxel.Material)
+}
+func (voxel *Voxel) DrawShaded(light VxdiDirectionalLight, sz float32) {
 	sz2 := sz / 2
 	n := rl.Vector3Normalize(light.Direction)
 	pos := Vector3Round(voxel.Position)

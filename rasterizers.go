@@ -21,10 +21,13 @@ func RasterizeLine(a, b rl.Vector3, operator VoxelOperatorFn) {
 	cx1 := max(int(a.X), int(b.X))
 	cy1 := max(int(a.Y), int(b.Y))
 	cz1 := max(int(a.Z), int(b.Z))
-
+	cnt := 1000
 	for x := cx0; x <= cx1; x++ {
 		for y := cy0; y <= cy1; y++ {
 			for z := cz0; z <= cz1; z++ {
+				if (cnt) == 0 {
+					return
+				}
 				p := rl.NewVector3(float32(x), float32(y), float32(z))
 
 				// Calculate vector from a to p
@@ -43,6 +46,7 @@ func RasterizeLine(a, b rl.Vector3, operator VoxelOperatorFn) {
 				p0 := rl.NewVector3(a.X+t*ab.X, a.Y+t*ab.Y, a.Z+t*ab.Z)
 				if rl.Vector3Distance(p0, p) <= 0.867 {
 					operator(p)
+					cnt--
 				}
 			}
 		}
@@ -64,9 +68,14 @@ func RasterizeSolidCube(a, b rl.Vector3, operator VoxelOperatorFn) {
 	cy1 := max(int(a.Y), int(b.Y))
 	cz1 := max(int(a.Z), int(b.Z))
 
+	cnt := 1000
 	for x := cx0; x <= cx1; x++ {
 		for y := cy0; y <= cy1; y++ {
 			for z := cz0; z <= cz1; z++ {
+				if (cnt) == 0 {
+					return
+				}
+				cnt--
 				p := rl.NewVector3(float32(x), float32(y), float32(z))
 				operator(p)
 			}
