@@ -25,7 +25,7 @@ func Vector3Round(v rl.Vector3) rl.Vector3 {
 		float32(math.Round(float64(v.Z))),
 	)
 }
-func doNothing() {}
+func doNothing(s string) {}
 func (app *VxdiAppEditor) AddGuides(point rl.Vector3) {
 
 	if rl.IsKeyPressed(rl.KeyG) {
@@ -148,6 +148,11 @@ func main() {
 		rl.KeyLeftAlt,
 		RasterizeSolidCube,
 	)
+	planeTool := NewTool3Steps(
+		app,
+		rl.KeyLeftAlt,
+		RasterizePlane,
+	)
 	app.RegisterTool("help", helpTool)
 	app.RegisterTool("select", selectTool)
 	app.RegisterTool("voxel", voxelTool)
@@ -155,15 +160,15 @@ func main() {
 	app.RegisterTool("structure", structureTool)
 	app.RegisterTool("shell", shellTool)
 	app.RegisterTool("volume", volumeTool)
+	app.RegisterTool("plane", planeTool)
 	if e, v := os.ReadDir("."); e == nil {
 		fmt.Printf("working dir : %v\n", v)
 	}
-	app.Layer.ImportScene(filename)
-	sh := app.Layer.GetShadows(&app.DirectionalLight)
+	sh := []Collision{}
 	app.Layer.OnChange = func(sc *Scene) {
-
 		sh = app.Layer.GetShadows(&app.DirectionalLight)
 	}
+	app.Layer.ImportScene(filename)
 
 	for !rl.WindowShouldClose() && !windowShouldClose {
 		app.ScreenWidth = int32(rl.GetScreenWidth())
@@ -334,7 +339,8 @@ func main() {
 
 		app.Status = fmt.Sprintf("%s current tool : %s,CurrentColor: %v, scene: %d, guides: %d, helpers: %d", app.Status, app.CurrentTool, app.CurrentColor, len(app.Layer.Voxels), len(app.Guides.Voxels), len(app.ConstructionHints.Voxels))
 		if isMousePositionChanged {
-			fmt.Sprintf(status)
+			cccc := fmt.Sprintf("%s %d", status, 2)
+			doNothing(cccc)
 		}
 
 		rl.DrawText(app.Status, 10, app.ScreenHeight-20, 20, rl.Black)

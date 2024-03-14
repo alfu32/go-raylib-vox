@@ -112,3 +112,18 @@ func RasterizeStructureCube(a, b rl.Vector3, operator VoxelOperatorFn) {
 	RasterizeSolidCube(rl.NewVector3(a.X, b.Y, a.Z), rl.NewVector3(a.X, b.Y, b.Z), operator)
 	RasterizeSolidCube(rl.NewVector3(b.X, b.Y, a.Z), b, operator)
 }
+
+// RasterizeStructureCube rasterizes a structured cube by drawing its skeletal structure.
+func RasterizePlane(a, b, c rl.Vector3, operator VoxelOperatorFn) {
+	ab0 := []rl.Vector3{}
+	ab1 := []rl.Vector3{}
+	RasterizeLine(a, b, func(position rl.Vector3) {
+		ab0 = append(ab0, position)
+	})
+	RasterizeLine(c, rl.Vector3{X: -a.X + b.X + c.X, Y: -a.Y + b.Y + c.Y, Z: -a.Z + b.Z + c.Z}, func(position rl.Vector3) {
+		ab1 = append(ab1, position)
+	})
+	for i := 0; i < min(len(ab0), len(ab1)); i++ {
+		RasterizeLine(ab0[i], ab1[i], operator)
+	}
+}

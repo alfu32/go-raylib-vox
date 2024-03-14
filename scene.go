@@ -234,9 +234,9 @@ func (scene *Scene) GetVoxelShadow(voxel *Voxel, light *VxdiDirectionalLight) []
 	} else {
 		result0 := []Collision{}
 		for _, k := range result {
-			// if k.HitVoxel.Equals(voxel) {
-			// 	continue
-			// }
+			if k.HitVoxel.Equals(voxel) {
+				result0 = append(result0, k)
+			}
 			result0 = append(result0, k)
 		}
 		return result0
@@ -374,6 +374,7 @@ func (s *Scene) ImportScene(filename string) error {
 		fmt.Printf("found  %v at line %d : %s\n", vx, lineNumber, line)
 		lineNumber++
 	}
+	s.OnChange(s)
 	return scanner.Err()
 }
 
@@ -423,5 +424,6 @@ func (s *Scene) LoadScene(filename string) error {
 		fmt.Printf("loaded %v", voxel)
 	}
 	fmt.Printf("loaded %v", s.keys)
+	s.OnChange(s)
 	return nil
 }
